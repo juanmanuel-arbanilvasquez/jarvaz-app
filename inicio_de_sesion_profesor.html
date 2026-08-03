@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVAZ - Panel del Profesor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root {
+            --primary: #A52238; --primary-dark: #6B1420; --secondary: #6c757d;
+            --success: #28a745; --danger: #dc3545; --warning: #ffc107; --info: #17a2b8;
+            --light: #FAF6F0; --dark: #2D0A0F; --white: #ffffff;
+            --gold: #D4AF37; --gold-light: #E5C158;
+            --bg-gradient: linear-gradient(135deg, #A52238, #6B1420);
+            --card-radius: 12px; --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        body { background: var(--light); color: var(--dark); overflow-x: hidden; line-height: 1.5; }
+        
+        .desktop-header {
+            background: var(--bg-gradient); color: var(--white); padding: 0.8rem 0;
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-container {
+            max-width: 1200px; margin: 0 auto; display: flex;
+            justify-content: space-between; align-items: center; padding: 0 1rem;
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .user-menu { display: flex; align-items: center; gap: 1rem; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--white);
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            color: var(--primary); cursor: pointer; transition: transform 0.3s ease;
+        }
+        .avatar:hover { transform: scale(1.1); }
+
+        .mobile-header { display: none; background: var(--bg-gradient); color: var(--white); position: fixed; top: 0; width: 100%; z-index: 1000; }
+        .mobile-nav-top { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; }
+        .mobile-logo { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
+        .hamburger-menu { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
+
+        .main-container {
+            max-width: 1200px; margin: 80px auto 20px; padding: 0 1rem;
+            display: grid; grid-template-columns: 280px 1fr 280px; gap: 1.5rem;
+        }
+        .sidebar {
+            background: var(--white); border-radius: var(--card-radius);
+            padding: 1.2rem; box-shadow: var(--card-shadow); height: fit-content;
+        }
+        .sidebar-title {
+            font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem;
+            color: var(--dark); display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .user-profile { text-align: center; margin-bottom: 1.5rem; }
+        .profile-avatar-large {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: var(--bg-gradient); display: flex; align-items: center;
+            justify-content: center; color: var(--white); font-weight: bold;
+            font-size: 2.2rem; margin: 0 auto 1rem; border: 3px solid var(--gold);
+        }
+        .profile-name { font-size: 1.3rem; font-weight: bold; color: var(--dark); margin-bottom: 0.3rem; }
+        .profile-type {
+            font-size: 0.85rem; color: var(--primary); font-weight: 600;
+            background: rgba(165, 34, 56, 0.1); padding: 0.3rem 0.8rem;
+            border-radius: 15px; display: inline-block;
+        }
+        .user-info-section { background: var(--light); padding: 1rem; border-radius: 10px; margin-top: 1rem; text-align: left; }
+        .info-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .info-item:last-child { border-bottom: none; }
+        .info-item i { color: var(--primary); width: 20px; text-align: center; }
+        .info-item-text { flex: 1; font-size: 0.85rem; color: var(--dark); }
+        .info-item-label { font-weight: 600; color: var(--secondary); font-size: 0.75rem; }
+
+        .create-post {
+            background: var(--white); border-radius: var(--card-radius);
+            padding: 1.5rem; box-shadow: var(--card-shadow); margin-bottom: 1.5rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .post-input {
+            width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 10px;
+            background: var(--light); resize: none; font-size: 1rem; margin-bottom: 0.8rem;
+            font-family: inherit; transition: all 0.3s ease;
+        }
+        .post-input:focus { outline: none; border-color: var(--primary); background: var(--white); }
+        
+        /* Estilo para el input de archivo */
+        .file-input-label {
+            display: flex; align-items: center; gap: 0.8rem; padding: 1rem;
+            border: 2px dashed var(--primary); border-radius: 10px;
+            background: rgba(165, 34, 56, 0.05); color: var(--primary);
+            cursor: pointer; transition: all 0.3s ease; margin-bottom: 0.8rem;
+        }
+        .file-input-label:hover { background: rgba(165, 34, 56, 0.1); border-color: var(--primary-dark); }
+        .file-input-label input[type="file"] { display: none; }
+        .image-preview {
+            max-width: 100%; border-radius: 10px; margin-top: 0.5rem;
+            display: none; border: 2px solid var(--gold);
+        }
+
+        .post-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        
+        .feed { display: flex; flex-direction: column; gap: 1.2rem; }
+        .post {
+            background: var(--white); border-radius: var(--card-radius);
+            padding: 1.2rem; box-shadow: var(--card-shadow); transition: transform 0.3s ease;
+        }
+        .post:hover { transform: translateY(-3px); }
+        .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+        .post-user { display: flex; align-items: center; gap: 0.8rem; }
+        .post-user-avatar {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--bg-gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--white); font-weight: bold; flex-shrink: 0;
+        }
+        .post-user-info h4 { margin-bottom: 0.2rem; font-size: 0.95rem; }
+        .post-time { font-size: 0.75rem; color: var(--secondary); }
+        .post-content { margin-bottom: 0.8rem; line-height: 1.5; font-size: 0.95rem; white-space: pre-wrap; }
+        .post-image { width: 100%; border-radius: 10px; margin-bottom: 0.8rem; overflow: hidden; }
+        .post-image img { width: 100%; height: auto; display: block; }
+        
+        .social-share-box {
+            background: var(--light); border-radius: 8px; padding: 1rem;
+            margin-top: 1rem; border: 1px dashed var(--gold);
+        }
+        .social-share-title { font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+        .social-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-social {
+            padding: 0.5rem 1rem; border-radius: 20px; border: none;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 0.4rem; transition: all 0.3s ease; color: white;
+        }
+        .btn-fb { background: #1877F2; }
+        .btn-ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .btn-tk { background: #000000; }
+        .btn-social:hover { transform: translateY(-2px); opacity: 0.9; }
+        
+        .academy-links {
+            margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #eee;
+            display: flex; gap: 1rem; justify-content: center;
+        }
+        .academy-links a {
+            color: var(--secondary); font-size: 1.2rem; transition: color 0.3s ease; text-decoration: none;
+        }
+        .academy-links a:hover { color: var(--primary); }
+
+        .btn {
+            padding: 0.7rem 1.2rem; border: none; border-radius: 25px;
+            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--bg-gradient); color: var(--white); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(165, 34, 56, 0.3); }
+        .btn-danger { background: var(--danger); color: var(--white); }
+        .btn-block { width: 100%; justify-content: center; }
+
+        .mobile-sidebar {
+            position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
+            background: var(--white); z-index: 1100; transition: left 0.3s ease; overflow-y: auto;
+        }
+        .mobile-sidebar.active { left: 0; }
+        .sidebar-header {
+            background: var(--bg-gradient); color: var(--white); padding: 1.2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-sidebar { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
+        .sidebar-links { padding: 1.2rem; }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0;
+            text-decoration: none; color: var(--dark); border-bottom: 1px solid var(--light);
+            cursor: pointer; font-weight: 500;
+        }
+        .sidebar-link:hover { color: var(--primary); }
+        .overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1050;
+        }
+        .overlay.active { display: block; }
+
+        .mobile-section { display: none; padding: 1.2rem; background: var(--white); }
+        .mobile-section.active { display: block; }
+
+        @media (max-width: 1024px) {
+            .main-container { grid-template-columns: 1fr; gap: 1rem; }
+            .sidebar { display: block !important; margin-bottom: 1rem; }
+        }
+        @media (max-width: 768px) {
+            .desktop-header { display: none; }
+            .mobile-header { display: block; }
+            .main-container { margin: 120px auto 80px; padding: 0 15px; grid-template-columns: 1fr; }
+            .sidebar { display: none !important; }
+            .post-actions { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+
+        .notification {
+            position: fixed; top: 100px; right: 20px; background: var(--success);
+            color: white; padding: 1rem 1.5rem; border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <!-- HEADER ESCRITORIO -->
+    <header class="desktop-header">
+        <div class="nav-container">
+            <div class="logo" onclick="window.location.href='inicio_de_sesion_profesor.html'">
+                <i class="fas fa-graduation-cap"></i> JARVAZ <span style="font-size:0.8rem; opacity:0.8; margin-left:5px;">| Panel Profesor</span>
+            </div>
+            <div class="user-menu">
+                <div class="avatar" id="userAvatar">PR</div>
+                <button class="btn btn-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HEADER MÓVIL -->
+    <header class="mobile-header">
+        <div class="mobile-nav-top">
+            <div class="mobile-logo"><i class="fas fa-graduation-cap"></i> JARVAZ</div>
+            <div style="display:flex; gap:1rem;">
+                <button class="btn btn-danger" onclick="logout()" style="padding:0.5rem;"><i class="fas fa-sign-out-alt"></i></button>
+                <button class="hamburger-menu" id="hamburgerMenu"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MENÚ LATERAL MÓVIL -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+        <div class="sidebar-header">
+            <h3 id="mobileUserName">Mi Perfil</h3>
+            <button class="close-sidebar" id="closeSidebar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sidebar-links">
+            <a class="sidebar-link" onclick="showMobileSection('create')"><i class="fas fa-plus-circle"></i> Nueva Publicación</a>
+            <a class="sidebar-link" onclick="showMobileSection('feed')"><i class="fas fa-newspaper"></i> Mis Publicaciones</a>
+            <a class="sidebar-link" onclick="showMobileSection('info')"><i class="fas fa-user-circle"></i> Mi Información</a>
+            <a class="sidebar-link" onclick="showMobileSection('socials')"><i class="fas fa-share-alt"></i> Redes de la Academia</a>
+        </div>
+        
+        <div class="mobile-section" id="mobileCreate">
+            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-plus-circle"></i> Nueva Publicación</h3>
+            <input type="text" class="post-input" id="mPostTitle" placeholder="Título de la publicación">
+            <textarea class="post-input" id="mPostContent" rows="4" placeholder="Escribe el contenido aquí..."></textarea>
+            
+            <label class="file-input-label">
+                <i class="fas fa-image"></i>
+                <span id="mPostImageLabel">📷 Seleccionar imagen de la galería (opcional)</span>
+                <input type="file" id="mPostImage" accept="image/*" onchange="handleImageSelect(this, 'previewMobile', 'mPostImageLabel')">
+            </label>
+            <img id="previewMobile" class="image-preview">
+            
+            <button class="btn btn-primary btn-block" onclick="crearPublicacion(true)">
+                <i class="fas fa-paper-plane"></i> Publicar en JARVAZ
+            </button>
+        </div>
+        
+        <div class="mobile-section" id="mobileFeed">
+            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-newspaper"></i> Feed</h3>
+            <div id="mobileFeedContainer"></div>
+        </div>
+        
+        <div class="mobile-section" id="mobileInfo">
+            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-user-circle"></i> Mi Información</h3>
+            <div id="mobileInfoContainer"></div>
+        </div>
+        
+        <div class="mobile-section" id="mobileSocials">
+            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-share-alt"></i> Redes de JARVAZ</h3>
+            <div class="academy-links" style="flex-direction:column; align-items:flex-start; gap:1rem; margin-top:1rem;">
+                <a href="https://facebook.com/tuacademiajarvaz" target="_blank" style="color:#1877F2; font-size:1rem;"><i class="fab fa-facebook"></i> Facebook: @tuacademiajarvaz</a>
+                <a href="https://instagram.com/tuacademiajarvaz" target="_blank" style="color:#E1306C; font-size:1rem;"><i class="fab fa-instagram"></i> Instagram: @tuacademiajarvaz</a>
+                <a href="https://www.tiktok.com/@jarvaz09" target="_blank" style="color:#000000; font-size:1rem;"><i class="fab fa-tiktok"></i> TikTok: @jarvaz09</a>
+            </div>
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-container">
+        <!-- Sidebar Izquierda: Perfil -->
+        <aside class="sidebar desktop-only">
+            <div class="user-profile">
+                <div class="profile-avatar-large" id="profileAvatar">PR</div>
+                <div class="profile-name" id="profileName">Profesor</div>
+                <div class="profile-type" id="profileType">Profesor Académico</div>
+                
+                <div class="user-info-section">
+                    <div class="info-item">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <div class="info-item-text">
+                            <div class="info-item-label">Especialidad</div>
+                            <div id="userSpecialty">-</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-envelope"></i>
+                        <div class="info-item-text">
+                            <div class="info-item-label">Email</div>
+                            <div id="userEmail">-</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-phone"></i>
+                        <div class="info-item-text">
+                            <div class="info-item-label">Teléfono</div>
+                            <div id="userPhone">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Feed Central -->
+        <main class="feed" id="mainFeed">
+            <!-- Formulario de Creación (Desktop) -->
+            <div class="create-post">
+                <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-pen-fancy"></i> Crear Nueva Publicación</h3>
+                <input type="text" id="postTitle" class="post-input" placeholder="Título de la publicación (ej: ¡Felicitaciones a los ingresantes!)">
+                <textarea id="postContent" class="post-input" rows="4" placeholder="Escribe el contenido aquí..."></textarea>
+                
+                <label class="file-input-label">
+                    <i class="fas fa-image"></i>
+                    <span id="postImageLabel">📷 Seleccionar imagen de la galería (opcional)</span>
+                    <input type="file" id="postImage" accept="image/*" onchange="handleImageSelect(this, 'previewDesktop', 'postImageLabel')">
+                </label>
+                <img id="previewDesktop" class="image-preview">
+                
+                <div class="post-actions">
+                    <button class="btn btn-primary" onclick="crearPublicacion(false)">
+                        <i class="fas fa-paper-plane"></i> Publicar en JARVAZ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista de Publicaciones -->
+            <div id="publicacionesList">
+                <div class="post" style="text-align:center; padding:2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:var(--primary);"></i>
+                    <p style="margin-top:1rem; color:var(--secondary);">Cargando publicaciones...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Sidebar Derecha: Redes Sociales -->
+        <aside class="sidebar desktop-only">
+            <div class="sidebar-title"><i class="fas fa-share-alt"></i> Redes de la Academia</div>
+            <p style="font-size:0.85rem; color:var(--secondary); margin-bottom:1rem;">
+                Comparte el contenido de JARVAZ en nuestras redes para mayor alcance.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+                <a href="https://facebook.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-fb" style="justify-content:center; text-decoration:none;">
+                    <i class="fab fa-facebook-f"></i> Facebook
+                </a>
+                <a href="https://instagram.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-ig" style="justify-content:center; text-decoration:none;">
+                    <i class="fab fa-instagram"></i> Instagram
+                </a>
+                <a href="https://www.tiktok.com/@jarvaz09" target="_blank" class="btn btn-social btn-tk" style="justify-content:center; text-decoration:none;">
+                    <i class="fab fa-tiktok"></i> TikTok: @jarvaz09
+                </a>
+            </div>
+            
+            <div class="sidebar-title" style="margin-top:2rem;"><i class="fas fa-info-circle"></i> Nota</div>
+            <p style="font-size:0.8rem; color:var(--secondary); line-height:1.4;">
+                Las imágenes se comprimen automáticamente. Las publicaciones se archivan después de 30 días.
+            </p>
+        </aside>
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
+        let selectedImageBase64 = '';
+
+        // ===== PROCESAR IMAGEN (Compresión automática para Google Sheets) =====
+        function handleImageSelect(input, previewId, labelId) {
+            const file = input.files[0];
+            const preview = document.getElementById(previewId);
+            const label = document.getElementById(labelId);
+            
+            if (!file) {
+                preview.style.display = 'none';
+                label.textContent = '📷 Seleccionar imagen de la galería (opcional)';
+                selectedImageBase64 = '';
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('⚠️ La imagen es muy grande (máx 5MB). Intenta con otra.', 'warning');
+                input.value = '';
+                return;
+            }
+
+            label.textContent = '⏳ Procesando imagen...';
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    // Redimensionar para que quepa en Google Sheets (máx 800px de ancho)
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Comprimir a JPEG con calidad 0.7
+                    selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    preview.src = selectedImageBase64;
+                    preview.style.display = 'block';
+                    label.textContent = '✅ ' + file.name;
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ===== VERIFICACIÓN DE SESIÓN =====
+        function checkSession() {
+            try {
+                const sessionData = localStorage.getItem('jarvaz_sesion');
+                if (!sessionData) return null;
+                
+                const rawData = JSON.parse(sessionData);
+                const normalizedUser = {
+                    Tipo: String(rawData.Tipo || rawData.tipo || rawData.categoria || '').toLowerCase(),
+                    Nombres: rawData.Nombres || rawData.nombres || '',
+                    Apellidos: rawData.Apellidos || rawData.apellidos || '',
+                    Especialidad: rawData.Especialidad || rawData.especialidad || '',
+                    Email: rawData.Email || rawData.email || '',
+                    Telefono: rawData.Telefono || rawData.telefono || ''
+                };
+                
+                if (normalizedUser.Tipo !== 'profesor') return null;
+                return normalizedUser;
+            } catch (error) {
+                console.error('Error al verificar sesión:', error);
+                return null;
+            }
+        }
+
+        // ===== CARGAR DATOS DEL PROFESOR =====
+        function loadUserData() {
+            const user = checkSession();
+            if (!user) {
+                showNotification('Acceso denegado o sesión no válida. Redirigiendo...', 'danger');
+                setTimeout(() => { window.location.replace('inicio.html'); }, 2000);
+                return;
+            }
+
+            const nombreCompleto = `${user.Nombres} ${user.Apellidos}`.trim() || 'Profesor';
+            const initials = (user.Nombres ? user.Nombres[0] : 'P') + (user.Apellidos ? user.Apellidos[0] : 'R');
+            
+            const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+
+            setText('profileAvatar', initials.toUpperCase());
+            setText('profileName', nombreCompleto);
+            setText('profileType', user.Especialidad || 'Profesor Académico');
+            setText('userSpecialty', user.Especialidad || 'No especificada');
+            setText('userEmail', user.Email || 'No especificado');
+            setText('userPhone', user.Telefono || 'No especificado');
+            setText('userAvatar', initials.toUpperCase());
+            setText('mobileUserName', nombreCompleto);
+            
+            const mobileInfoContainer = document.getElementById('mobileInfoContainer');
+            if (mobileInfoContainer) {
+                mobileInfoContainer.innerHTML = `
+                    <div class="user-info-section">
+                        <div class="info-item"><i class="fas fa-chalkboard-teacher"></i><div class="info-item-text"><div class="info-item-label">Especialidad</div><div>${user.Especialidad || 'No especificada'}</div></div></div>
+                        <div class="info-item"><i class="fas fa-envelope"></i><div class="info-item-text"><div class="info-item-label">Email</div><div>${user.Email || 'No especificado'}</div></div></div>
+                        <div class="info-item"><i class="fas fa-phone"></i><div class="info-item-text"><div class="info-item-label">Teléfono</div><div>${user.Telefono || 'No especificado'}</div></div></div>
+                    </div>
+                `;
+            }
+        }
+
+        // ===== JSONP =====
+        function llamarAPI(params, callback) {
+            const callbackName = 'jsonpCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            const script = document.createElement('script');
+            window[callbackName] = function(data) { callback(data); delete window[callbackName]; script.remove(); };
+            params.callback = callbackName;
+            const queryString = Object.keys(params).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
+            script.src = `${APPS_SCRIPT_URL}?${queryString}`;
+            document.head.appendChild(script);
+            setTimeout(() => { if (window[callbackName]) { delete window[callbackName]; script.remove(); callback({ status: 'error', message: 'Tiempo agotado' }); } }, 15000);
+        }
+
+        // ===== CREAR PUBLICACIÓN =====
+        function crearPublicacion(esMovil) {
+            const user = checkSession();
+            if (!user) return;
+
+            const titulo = esMovil ? document.getElementById('mPostTitle').value.trim() : document.getElementById('postTitle').value.trim();
+            const contenido = esMovil ? document.getElementById('mPostContent').value.trim() : document.getElementById('postContent').value.trim();
+            
+            // Usar la imagen procesada en Base64
+            const imagenURL = selectedImageBase64;
+
+            if (!titulo || !contenido) {
+                showNotification('El título y el contenido son obligatorios', 'warning');
+                return;
+            }
+
+            const params = {
+                action: 'crearPublicacion',
+                autorID: user.Nombres + ' ' + user.Apellidos,
+                autorTipo: 'profesor',
+                autorNombre: `${user.Nombres} ${user.Apellidos}`.trim(),
+                titulo: titulo,
+                contenido: contenido,
+                imagenURL: imagenURL || ''
+            };
+
+            showNotification('📤 Subiendo publicación...', 'info');
+            
+            llamarAPI(params, function(response) {
+                if (response.status === 'success') {
+                    showNotification('✅ ¡Publicación creada exitosamente!', 'success');
+                    
+                    // Limpiar formularios
+                    document.getElementById('postTitle').value = '';
+                    document.getElementById('postContent').value = '';
+                    document.getElementById('mPostTitle').value = '';
+                    document.getElementById('mPostContent').value = '';
+                    
+                    // Resetear imágenes
+                    selectedImageBase64 = '';
+                    document.getElementById('previewDesktop').style.display = 'none';
+                    document.getElementById('previewMobile').style.display = 'none';
+                    document.getElementById('postImage').value = '';
+                    document.getElementById('mPostImage').value = '';
+                    document.getElementById('postImageLabel').textContent = '📷 Seleccionar imagen de la galería (opcional)';
+                    document.getElementById('mPostImageLabel').textContent = '📷 Seleccionar imagen de la galería (opcional)';
+                    
+                    cargarPublicaciones();
+                } else {
+                    showNotification('❌ Error: ' + response.message, 'danger');
+                }
+            });
+        }
+
+        // ===== CARGAR PUBLICACIONES =====
+        function cargarPublicaciones() {
+            llamarAPI({ action: 'getPublicaciones' }, function(response) {
+                const container = document.getElementById('publicacionesList');
+                const mobileContainer = document.getElementById('mobileFeedContainer');
+                
+                if (response.status === 'success' && response.data && response.data.length > 0) {
+                    let html = '';
+                    response.data.forEach(pub => {
+                        const fecha = new Date(pub.Fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
+                        const imageHtml = pub.ImagenURL ? `<div class="post-image"><img src="${pub.ImagenURL}" alt="Imagen"></div>` : '';
+                        
+                        const textoRedes = `${pub.Titulo}\n\n${pub.Contenido}\n\n#JARVAZ #Preuniversitario #Academia`.replace(/'/g, "\\'");
+                        
+                        html += `
+                            <div class="post">
+                                <div class="post-header">
+                                    <div class="post-user">
+                                        <div class="post-user-avatar">${pub.AutorNombre.charAt(0)}</div>
+                                        <div class="post-user-info">
+                                            <h4>${pub.AutorNombre}</h4>
+                                            <p class="post-time">${fecha} · <i class="fas fa-chalkboard-teacher"></i></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 style="color:var(--primary); margin-bottom:0.5rem;">${pub.Titulo}</h3>
+                                <div class="post-content">${pub.Contenido}</div>
+                                ${imageHtml}
+                                
+                                <div class="social-share-box">
+                                    <div class="social-share-title"><i class="fas fa-share-square"></i> Compartir en Redes (Copia y pega)</div>
+                                    <div class="social-buttons">
+                                        <button class="btn-social btn-fb" onclick="copiarTexto('${textoRedes}', 'Facebook')"><i class="fab fa-facebook-f"></i> Copiar para FB</button>
+                                        <button class="btn-social btn-ig" onclick="copiarTexto('${textoRedes}', 'Instagram')"><i class="fab fa-instagram"></i> Copiar para IG</button>
+                                        <button class="btn-social btn-tk" onclick="copiarTexto('${textoRedes}', 'TikTok')"><i class="fab fa-tiktok"></i> Copiar para TK</button>
+                                    </div>
+                                    <div class="academy-links">
+                                        <a href="https://facebook.com/tuacademiajarvaz" target="_blank" title="Reacciona en Facebook"><i class="fab fa-facebook"></i></a>
+                                        <a href="https://instagram.com/tuacademiajarvaz" target="_blank" title="Reacciona en Instagram"><i class="fab fa-instagram"></i></a>
+                                        <a href="https://www.tiktok.com/@jarvaz09" target="_blank" title="Reacciona en TikTok"><i class="fab fa-tiktok"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                    if(mobileContainer) mobileContainer.innerHTML = html;
+                } else {
+                    const emptyMsg = '<div class="post" style="text-align:center; padding:2rem;"><p style="color:var(--secondary);">No hay publicaciones aún.</p></div>';
+                    container.innerHTML = emptyMsg;
+                    if(mobileContainer) mobileContainer.innerHTML = emptyMsg;
+                }
+            });
+        }
+
+        // ===== UTILIDADES =====
+        function copiarTexto(texto, red) {
+            navigator.clipboard.writeText(texto).then(() => {
+                showNotification(`✅ Texto copiado. ¡Pégalo en ${red}!`, 'success');
+            }).catch(() => {
+                showNotification('❌ No se pudo copiar el texto', 'danger');
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.background = type === 'success' ? 'var(--success)' : type === 'danger' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--info)';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function logout() {
+            if (confirm('¿Estás seguro de que deseas cerrar tu sesión en JARVAZ?')) {
+                localStorage.removeItem('jarvaz_sesion');
+                window.location.replace('inicio.html');
+            }
+        }
+
+        // ===== MENÚ MÓVIL =====
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const mobileSidebar = document.getElementById('mobileSidebar');
+        const overlay = document.getElementById('overlay');
+
+        if (hamburgerMenu) {
+            hamburgerMenu.addEventListener('click', () => {
+                mobileSidebar.classList.add('active');
+                overlay.classList.add('active');
+                hideAllMobileSections();
+            });
+        }
+        if (closeSidebar) {
+            closeSidebar.addEventListener('click', () => {
+                mobileSidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                mobileSidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
+
+        function hideAllMobileSections() {
+            document.querySelectorAll('.mobile-section').forEach(section => section.classList.remove('active'));
+        }
+
+        function showMobileSection(section) {
+            hideAllMobileSections();
+            const sectionElement = document.getElementById('mobile' + section.charAt(0).toUpperCase() + section.slice(1));
+            if (sectionElement) sectionElement.classList.add('active');
+        }
+
+        // ===== INICIALIZACIÓN =====
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            cargarPublicaciones();
+        });
+    </script>
+</body>
+</html>

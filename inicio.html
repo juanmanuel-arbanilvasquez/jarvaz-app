@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PREPÁRATE CON JARVAZ · Academia Preuniversitaria</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-600-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-700-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-900-normal.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  :root {
+    --vino-900: #2D0A0F; --vino-800: #4A0E17; --vino-700: #6B1420; --vino-600: #8B1A2A;
+    --vino-500: #A52238; --oro-500: #D4AF37; --oro-400: #E5C158; --oro-300: #F0D67A; --crema: #FAF6F0;
+  }
+  body {
+    font-family: 'Poppins', sans-serif; color: #fff;
+    background: linear-gradient(120deg, #2D0A0F, #4A0E17, #8B1A2A, #6B1420);
+    background-size: 400% 400%; animation: gradientBG 18s ease infinite;
+    display: flex; align-items: center; justify-content: center; position: relative; padding: 10px;
+  }
+  @keyframes gradientBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  .particle { position: fixed; border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.6), transparent 70%); pointer-events: none; animation: floatUp linear infinite; z-index: 0; }
+  @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{transform:translateY(-10vh) scale(1);opacity:0} }
+  .container {
+    background: rgba(45,10,15,0.65); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(212,175,55,0.25); border-radius: 20px; padding: 18px 22px 16px;
+    width: 100%; max-width: 460px; max-height: 100vh; text-align: center;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+    position: relative; z-index: 1; animation: slideUp 0.7s ease-out;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .container::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--oro-500),transparent); }
+  .header-compact { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; flex-shrink:0; }
+  .logo-wrap { position:relative; width:68px; height:68px; flex-shrink:0; }
+  .logo-glow { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90px; height:90px; border-radius:50%; background:radial-gradient(circle, rgba(212,175,55,0.5), transparent 70%); animation:glowPulse 2.5s ease-in-out infinite; z-index:0; }
+  .logo-svg { width:68px; height:68px; position:relative; z-index:2; animation:logoFloat 4s ease-in-out infinite; filter:drop-shadow(0 2px 8px rgba(212,175,55,0.5)); transition:transform 0.4s ease; }
+  .logo-svg:hover { transform:scale(1.08) rotate(-5deg); }
+  .logo-ring { position:absolute; inset:-5px; border-radius:50%; background:conic-gradient(from 0deg, transparent 0deg, var(--oro-500) 60deg, transparent 120deg, var(--oro-400) 200deg, transparent 260deg, var(--oro-500) 320deg, transparent 360deg); animation:rotateRing 6s linear infinite; opacity:0.7; z-index:1; mask:radial-gradient(circle, transparent 58%, black 60%); -webkit-mask:radial-gradient(circle, transparent 58%, black 60%); }
+  .sparkle-container { position:absolute; top:50%; left:50%; width:100px; height:100px; transform:translate(-50%,-50%); pointer-events:none; z-index:3; }
+  .sparkle { position:absolute; top:50%; left:50%; width:3px; height:3px; background:var(--oro-300); border-radius:50%; box-shadow:0 0 6px var(--oro-400), 0 0 10px var(--oro-500); animation:sparkleOrbit linear infinite; }
+  .sparkle::before { content:'✦'; position:absolute; top:-5px; left:-3px; color:var(--oro-300); font-size:8px; text-shadow:0 0 6px var(--oro-500); }
+  @keyframes sparkleOrbit { 0%{transform:rotate(0deg) translateX(48px) rotate(0deg) scale(0.5);opacity:0} 15%{opacity:1;transform:rotate(54deg) translateX(48px) rotate(-54deg) scale(1)} 50%{opacity:1;transform:rotate(180deg) translateX(48px) rotate(-180deg) scale(1.2)} 85%{opacity:1;transform:rotate(306deg) translateX(48px) rotate(-306deg) scale(1)} 100%{transform:rotate(360deg) translateX(48px) rotate(-360deg) scale(0.5);opacity:0} }
+  @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  @keyframes rotateRing { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes glowPulse { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.6} 50%{transform:translate(-50%,-50%) scale(1.2);opacity:1} }
+  .title-block { flex-shrink:0; margin-bottom:8px; }
+  h1 { font-family:'Playfair Display',serif; font-weight:900; font-size:1.35em; letter-spacing:1.5px; background:linear-gradient(135deg,var(--oro-300) 0%,var(--oro-500) 50%,var(--oro-300) 100%); background-size:200% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:shimmer 4s linear infinite; line-height:1.1; margin-bottom:2px; }
+  @keyframes shimmer { to{background-position:200% center} }
+  .subtitle { font-size:0.75em; color:#e8d5d8; letter-spacing:0.5px; }
+  
+  .session-badge {
+    display: none; align-items: center; gap: 10px; padding: 8px 10px;
+    background: linear-gradient(135deg, rgba(34,197,94,0.14), rgba(34,197,94,0.05));
+    border: 1px solid rgba(34,197,94,0.35); border-radius: 12px; margin-bottom: 10px;
+    text-align: left; flex-shrink: 0; animation: badgeIn 0.4s ease-out;
+  }
+  .session-badge.active { display: flex; }
+  @keyframes badgeIn { from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:translateY(0)} }
+  .session-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--vino-600), var(--oro-500));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; flex-shrink: 0; color: #fff;
+    border: 1.5px solid rgba(212,175,55,0.6); box-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: 0.5px;
+  }
+  .session-info { flex: 1; min-width: 0; line-height: 1.25; }
+  .session-info strong { display: block; font-size: 12px; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .session-type { display: inline-flex; align-items: center; gap: 5px; font-size: 9.5px; color: #86efac; letter-spacing: 0.3px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); animation: livePulse 1.8s infinite; }
+  @keyframes livePulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,0.6)} 70%{box-shadow:0 0 0 6px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+  .btn-logout {
+    width: auto; margin: 0; padding: 6px 11px; border-radius: 8px; font-size: 10.5px;
+    text-transform: none; letter-spacing: 0.3px; white-space: nowrap; flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5;
+    cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 600;
+    transition: background .25s, border-color .25s, transform .15s, color .25s;
+  }
+  .btn-logout:hover { background: rgba(239,68,68,0.28); border-color: rgba(239,68,68,0.7); color: #fff; transform: translateY(-1px); }
+  .btn-logout:active { transform: translateY(0); }
+  .btn-logout svg { width: 12px; height: 12px; flex-shrink: 0; }
+  
+  .alert { padding:8px 10px; border-radius:8px; margin-bottom:6px; font-size:0.75em; display:none; text-align:left; border-left:3px solid; flex-shrink:0; }
+  .alert-success { background:rgba(34,197,94,0.12); color:#86efac; border-color:#22c55e; }
+  .alert-error { background:rgba(239,68,68,0.12); color:#fca5a5; border-color:#ef4444; }
+  .alert-info { background:rgba(212,175,55,0.12); color:var(--oro-300); border-color:var(--oro-500); }
+  
+  .main-content { flex:1; display:flex; flex-direction:column; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--oro-500) transparent; }
+  .main-content::-webkit-scrollbar { width:4px; }
+  .main-content::-webkit-scrollbar-thumb { background:var(--oro-500); border-radius:2px; }
+  
+  .select-wrap { position:relative; margin-bottom:8px; flex-shrink:0; }
+  .select-wrap::after { content:'▼'; position:absolute; right:14px; top:50%; transform:translateY(-50%); color:var(--oro-500); font-size:9px; pointer-events:none; }
+  select, input { width:100%; padding:9px 12px; margin:4px 0; border-radius:9px; border:1px solid rgba(212,175,55,0.2); font-size:0.82em; font-family:'Poppins',sans-serif; transition:all 0.3s; }
+  select { background:rgba(255,255,255,0.06); color:#fff; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:32px; }
+  select option { background:var(--vino-900); color:#fff; }
+  input { background:rgba(255,255,255,0.08); color:#fff; }
+  input::placeholder { color:rgba(232,213,216,0.5); font-size:0.95em; }
+  select:focus, input:focus { outline:none; border-color:var(--oro-500); background:rgba(212,175,55,0.08); box-shadow:0 0 0 2px rgba(212,175,55,0.15); }
+  
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .form-grid input { margin:0; }
+  .password-wrap { position:relative; margin:4px 0; }
+  .password-wrap input { margin:0; padding-right:38px; }
+  .toggle-password { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:transparent; border:none; color:var(--oro-400); cursor:pointer; padding:3px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; opacity:0.75; transition:opacity 0.3s, transform 0.2s; border-radius:50%; }
+  .toggle-password:hover { opacity:1; background:rgba(212,175,55,0.1); }
+  .toggle-password svg { width:16px; height:16px; }
+  .date-label { display:block; text-align:left; margin:4px 0 2px; color:var(--oro-400); font-size:0.68em; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; }
+  
+  .profesor-notice { background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(139,26,42,0.12)); border:1px solid rgba(212,175,55,0.35); border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:0.7em; color:var(--crema); text-align:left; line-height:1.4; display:none; flex-shrink:0; }
+  .profesor-notice strong { display:block; color:var(--oro-400); margin-bottom:2px; font-size:0.95em; }
+  
+  .floating-btn-wrap { margin-top:6px; display:none; flex-shrink:0; }
+  .floating-btn-wrap.active { display:block; animation:fadeIn 0.4s; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+  .floating-btn { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff !important; border:none; border-radius:50px; font-size:0.75em; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; box-shadow:0 6px 16px rgba(37,211,102,0.4); transition:all 0.3s; text-decoration:none; text-transform:none; letter-spacing:0.3px; animation:floatPulse 2s ease-in-out infinite; position:relative; }
+  .floating-btn::before { content:''; position:absolute; inset:-3px; border-radius:50px; background:linear-gradient(135deg,#25D366,#128C7E); opacity:0.4; animation:ripple 2s ease-out infinite; z-index:-1; }
+  @keyframes floatPulse { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+  @keyframes ripple { 0%{transform:scale(1);opacity:0.4} 100%{transform:scale(1.3);opacity:0} }
+  .floating-btn:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 10px 24px rgba(37,211,102,0.5); }
+  
+  button { width:100%; padding:10px; border:none; border-radius:9px; font-size:0.82em; font-weight:600; font-family:'Poppins',sans-serif; letter-spacing:0.8px; text-transform:uppercase; cursor:pointer; margin-top:6px; transition:all 0.3s cubic-bezier(0.4,0,0.2,1); position:relative; overflow:hidden; flex-shrink:0; }
+  .btn-primary { background:linear-gradient(135deg,var(--vino-600),var(--vino-800)); color:#fff; border:1px solid rgba(212,175,55,0.4); box-shadow:0 6px 16px rgba(139,26,42,0.4); }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(139,26,42,0.6); border-color:var(--oro-500); }
+  .btn-gold { background:linear-gradient(135deg,var(--oro-500),var(--oro-400)); color:var(--vino-900); box-shadow:0 6px 16px rgba(212,175,55,0.35); font-weight:700; }
+  .btn-gold:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(212,175,55,0.5); }
+  button:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; }
+  
+  /* ✅ NUEVO: Botón de Vista Previa */
+  .preview-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 10px; margin-top: 8px;
+    border: 1px dashed var(--oro-500); border-radius: 9px;
+    background: rgba(212, 175, 55, 0.08);
+    color: var(--oro-400); text-decoration: none;
+    font-size: 0.82em; font-weight: 600; font-family: 'Poppins', sans-serif;
+    transition: all 0.3s;
+  }
+  .preview-btn:hover {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--oro-300);
+    border-color: var(--oro-400);
+    transform: translateY(-1px);
+  }
+
+  .divider { display:flex; align-items:center; margin:10px 0 6px; color:rgba(212,175,55,0.6); font-size:0.7em; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; flex-shrink:0; }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.35),transparent); }
+  .divider span { padding:0 10px; }
+  
+  .footer { margin-top:8px; padding-top:8px; border-top:1px solid rgba(212,175,55,0.15); font-size:0.78em; color:#e8d5d8; flex-shrink:0; }
+  .footer a { color:var(--oro-400); text-decoration:none; cursor:pointer; font-weight:600; }
+  .footer a:hover { color:var(--oro-300); text-decoration:underline; }
+  
+  .hidden { display:none !important; }
+  .form-animated { animation:formSlide 0.35s ease-out; }
+  @keyframes formSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .loader { display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,0.3); border-radius:50%; border-top-color:currentColor; animation:spin 0.8s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(0.8) sepia(1) saturate(5) hue-rotate(10deg); cursor:pointer; }
+  
+  @media (max-height:700px) {
+    .container { padding:14px 18px 12px; }
+    .logo-wrap { width:58px; height:58px; } .logo-svg { width:58px; height:58px; }
+    .logo-glow { width:80px; height:80px; } .sparkle-container { width:88px; height:88px; }
+    h1 { font-size:1.15em; } .subtitle { font-size:0.7em; }
+    select, input { padding:8px 11px; font-size:0.78em; margin:3px 0; }
+    button { padding:9px; font-size:0.78em; margin-top:5px; }
+    .header-compact { margin-bottom:6px; } .title-block { margin-bottom:5px; }
+    .divider { margin:7px 0 4px; } .footer { margin-top:5px; padding-top:5px; }
+    .date-label { margin:3px 0 1px; font-size:0.65em; }
+    .session-badge { margin-bottom:7px; padding:7px 9px; }
+  }
+  @media (max-height:600px) {
+    .container { padding:10px 16px; } .logo-wrap { width:50px; height:50px; } .logo-svg { width:50px; height:50px; }
+    h1 { font-size:1em; } .subtitle { font-size:0.65em; }
+    select, input { padding:7px 10px; font-size:0.75em; } button { padding:8px; font-size:0.75em; }
+  }
+  @media (max-width:480px) { body { padding:8px; } .container { padding:16px 18px 14px; border-radius:18px; } .form-grid { grid-template-columns:1fr; } }
+  @media (max-width:360px) {
+    h1 { font-size:1.1em; } .logo-wrap { width:54px; height:54px; } .logo-svg { width:54px; height:54px; }
+    .session-info strong { font-size:11px; }
+    .btn-logout span.lbl { display:none; }
+    .btn-logout { padding:6px 8px; }
+  }
+  @media (min-width:768px) and (min-height:800px) {
+    .container { padding:22px 28px 18px; } h1 { font-size:1.6em; } .subtitle { font-size:0.85em; }
+    select, input { padding:11px 14px; font-size:0.88em; } button { padding:12px; font-size:0.88em; }
+    .logo-wrap { width:72px; height:72px; } .logo-svg { width:72px; height:72px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-compact">
+    <div class="logo-wrap">
+      <div class="logo-glow"></div>
+      <div class="logo-ring"></div>
+      <div class="sparkle-container" id="sparkleContainer"></div>
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#8B1A2A"/><stop offset="50%" stop-color="#6B1420"/><stop offset="100%" stop-color="#4A0E17"/>
+          </linearGradient>
+          <linearGradient id="capTop" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#A52238"/><stop offset="100%" stop-color="#6B1420"/>
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F0D67A"/><stop offset="50%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#B8941F"/>
+          </linearGradient>
+          <linearGradient id="tasselGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#F0D67A"/><stop offset="100%" stop-color="#D4AF37"/>
+          </linearGradient>
+        </defs>
+        <path d="M 25 55 L 50 68 L 75 55 L 50 45 Z" fill="url(#capGrad)" stroke="#2D0A0F" stroke-width="0.5"/>
+        <path d="M 15 45 L 50 30 L 85 45 L 50 58 Z" fill="url(#capTop)" stroke="#2D0A0F" stroke-width="0.5"/>
+        <path d="M 15 45 L 50 30 L 85 45" fill="none" stroke="url(#goldGrad)" stroke-width="1.5"/>
+        <path d="M 50 30 L 50 58" stroke="#2D0A0F" stroke-width="0.8"/>
+        <circle cx="50" cy="44" r="3" fill="url(#goldGrad)" stroke="#B8941F" stroke-width="0.5"/>
+        <circle cx="50" cy="44" r="1.5" fill="#F0D67A"/>
+        <path d="M 50 44 Q 58 50 62 62 Q 63 68 62 72" fill="none" stroke="url(#tasselGrad)" stroke-width="2" stroke-linecap="round"/>
+        <ellipse cx="62" cy="74" rx="4" ry="6" fill="url(#tasselGrad)" stroke="#B8941F" stroke-width="0.5"/>
+        <path d="M 59 73 L 59 80 M 60.5 73 L 60.5 81 M 62 73 L 62 82 M 63.5 73 L 63.5 81 M 65 73 L 65 80" stroke="#B8941F" stroke-width="0.8"/>
+        <path d="M 22 43 L 50 32 L 78 43" fill="none" stroke="#F0D67A" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <div class="title-block" style="text-align:left;">
+      <h1>PREPÁRATE CON JARVAZ</h1>
+      <p class="subtitle">Tu camino a la universidad</p>
+    </div>
+  </div>
+
+  <div id="sessionBadge" class="session-badge">
+    <div class="session-avatar" id="sessionAvatar">U</div>
+    <div class="session-info">
+      <strong id="sessionName">Usuario</strong>
+      <span class="session-type"><i class="live-dot"></i><span id="sessionType">Sesión activa</span></span>
+    </div>
+    <button type="button" class="btn-logout" onclick="cerrarSesion()" aria-label="Cerrar sesión">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="lbl">Salir</span>
+    </button>
+  </div>
+
+  <div id="alertBox" class="alert"></div>
+
+  <div class="main-content">
+    <div class="select-wrap">
+      <select id="categoria">
+        <option value="">Selecciona tu categoría</option>
+        <option value="secundaria">🎒 Alumno de Secundaria</option>
+        <option value="publico">👥 Público en General</option>
+        <option value="profesor">👨‍🏫 Profesor Académico</option>
+      </select>
+    </div>
+
+    <div id="profesorNotice" class="profesor-notice">
+      <strong>⚠️ Acceso exclusivo profesores JARVAZ</strong>
+      Ingresa tu código de activación. Si no lo tienes, solicítalo con el botón de abajo.
+    </div>
+
+    <form id="formSecundaria" class="hidden form-animated">
+      <div class="form-grid">
+        <input type="text" id="sec_nombre" placeholder="Nombres" required>
+        <input type="text" id="sec_apellidos" placeholder="Apellidos" required>
+      </div>
+      <div class="form-grid">
+        <input type="text" id="sec_colegio" placeholder="Colegio" required>
+        <input type="text" id="sec_grado" placeholder="Grado / Sección" required>
+      </div>
+      <label class="date-label">Fecha de nacimiento</label>
+      <input type="date" id="sec_nacimiento" required>
+      <input type="email" id="sec_email" placeholder="Correo Electrónico" required>
+      <input type="tel" id="sec_telefono" placeholder="Teléfono (WhatsApp)" pattern="[0-9]{9}" required>
+      <div class="password-wrap">
+        <input type="password" id="sec_password" placeholder="Contraseña (mín. 6 caracteres)" minlength="6" required>
+        <button type="button" class="toggle-password" onclick="togglePassword('sec_password', this)" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <button type="submit" class="btn-gold">Crear Cuenta</button>
+    </form>
+
+    <form id="formPublico" class="hidden form-animated">
+      <div class="form-grid">
+        <input type="text" id="pub_nombre" placeholder="Nombres" required>
+        <input type="text" id="pub_apellidos" placeholder="Apellidos" required>
+      </div>
+      <label class="date-label">Fecha de nacimiento</label>
+      <input type="date" id="pub_nacimiento" required>
+      <input type="email" id="pub_email" placeholder="Correo Electrónico" required>
+      <input type="tel" id="pub_telefono" placeholder="Teléfono (WhatsApp)" pattern="[0-9]{9}" required>
+      <div class="password-wrap">
+        <input type="password" id="pub_password" placeholder="Contraseña (mín. 6 caracteres)" minlength="6" required>
+        <button type="button" class="toggle-password" onclick="togglePassword('pub_password', this)" aria-label="Mostrar contraseña">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <button type="submit" class="btn-gold">Crear Cuenta</button>
+    </form>
+
+    <form id="formProfesor" class="hidden form-animated">
+      <div id="profPaso1">
+        <input type="text" id="prof_codigo" placeholder="🔑 Ingresa tu código JARVAZ" autocomplete="off">
+        <button type="button" class="btn-gold" id="btnProfVerificar" onclick="verificarCodigoProfesor()">Verificar código</button>
+      </div>
+      <div id="profPaso2" class="hidden form-animated">
+        <div class="profesor-notice" style="display:block;">
+          <strong>✨ ¡Código válido! Es tu primer ingreso</strong>
+          Completa tus datos para activar tu cuenta. La próxima vez entrarás solo con tu código.
+        </div>
+        <div class="form-grid">
+          <input type="text" id="prof_nombre" placeholder="Nombres">
+          <input type="text" id="prof_apellidos" placeholder="Apellidos">
+        </div>
+        <input type="text" id="prof_especialidad" placeholder="Curso / Especialidad (ej: Matemática)">
+        <label class="date-label">Fecha de nacimiento</label>
+        <input type="date" id="prof_nacimiento">
+        <input type="email" id="prof_email" placeholder="Correo Electrónico">
+        <input type="tel" id="prof_telefono" placeholder="Teléfono (WhatsApp)" pattern="[0-9]{9}">
+        <button type="button" class="btn-gold" onclick="registrarProfesor()">Completar registro</button>
+      </div>
+    </form>
+
+    <div class="floating-btn-wrap" id="floatingBtnWrap">
+      <a href="#" target="_blank" class="floating-btn" id="floatingBtn" onclick="enviarWhatsApp(event)">
+        <span style="font-size:16px;">💬</span>
+        <span>Pedir tu código al administrador</span>
+      </a>
+    </div>
+
+    <div class="divider"><span>Iniciar Sesión</span></div>
+
+    <input type="text" id="login_contacto" placeholder="Correo o Teléfono">
+    <div class="password-wrap">
+      <input type="password" id="login_password" placeholder="Contraseña">
+      <button type="button" class="toggle-password" onclick="togglePassword('login_password', this)" aria-label="Mostrar contraseña">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <button id="btnLogin" class="btn-primary">Iniciar Sesión</button>
+  </div>
+
+  <div class="footer">
+    <!-- ✅ NUEVO: Botón de Vista Previa que limpia la sesión y va al dashboard -->
+    <a href="inicio_de_sesion_general.html" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion');">
+      <i class="fas fa-eye"></i> Vista Previa del App (Modo Invitado)
+    </a>
+    <br>
+    ¿No tienes cuenta? <a id="btnCrearCuenta">Crea tu cuenta</a>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
+  const WHATSAPP_ADMIN = '51973441252';
+
+  function llamarAPI(params) {
+    return new Promise((resolve, reject) => {
+      const cbName = 'jarvaz_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+      const script = document.createElement('script');
+      const timer = setTimeout(() => { cleanup(); reject(new Error('Tiempo de espera agotado. Revisa tu conexión.')); }, 15000);
+      function cleanup() {
+        clearTimeout(timer);
+        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+      }
+      window[cbName] = function (data) { cleanup(); resolve(data); };
+      params.callback = cbName;
+      const qs = Object.keys(params)
+        .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] == null ? '' : params[k]))
+        .join('&');
+      script.src = API_URL + '?' + qs;
+      script.onerror = function () { cleanup(); reject(new Error('No se pudo conectar con el servidor.')); };
+      document.head.appendChild(script);
+    });
+  }
+
+  function normalizarUsuario(u) {
+    return {
+      id: u.ID, tipo: String(u.Tipo || '').toLowerCase(), categoria: String(u.Tipo || '').toLowerCase(),
+      nombres: u.Nombres, apellidos: u.Apellidos, email: u.Email, telefono: u.Telefono,
+      colegio: u.Colegio, grado: u.Grado, especialidad: u.Especialidad, codigoProfesor: u.CodigoProfesor
+    };
+  }
+
+  function normalizarProfesor(u) {
+    return {
+      id: u.Codigo, tipo: 'profesor', categoria: 'profesor',
+      nombres: u.Nombres, apellidos: u.Apellidos, especialidad: u.Especialidad,
+      email: u.Email, telefono: u.Telefono, codigoProfesor: u.Codigo
+    };
+  }
+
+  function crearParticulas() {
+    const num = window.innerWidth < 768 ? 12 : 20;
+    for (let i = 0; i < num; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1.5;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+      p.style.animationDelay = Math.random() * 10 + 's';
+      document.body.appendChild(p);
+    }
+  }
+  crearParticulas();
+
+  function crearPolvoBrillante() {
+    const container = document.getElementById('sparkleContainer');
+    if (!container) return;
+    const numSparkles = 6;
+    for (let i = 0; i < numSparkles; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      const duration = 6 + Math.random() * 4;
+      const delay = (i / numSparkles) * duration;
+      sparkle.style.animationDuration = duration + 's';
+      sparkle.style.animationDelay = '-' + delay + 's';
+      container.appendChild(sparkle);
+    }
+  }
+  crearPolvoBrillante();
+
+  // ✅ MEJORADO: Redirección automática si ya hay sesión
+  function verificarSesion() {
+    const sesion = localStorage.getItem('jarvaz_sesion');
+    if (sesion) {
+      try {
+        const user = JSON.parse(sesion);
+        const tipo = (user.tipo || user.categoria || '').toLowerCase();
+        
+        // Determinar a dónde redirigir
+        let destino = 'inicio_de_sesion_general.html';
+        if (tipo === 'profesor') {
+          destino = 'inicio_de_sesion_profesor.html';
+        }
+        
+        // Redirigir inmediatamente (replace evita que el usuario pueda volver atrás con el botón del navegador)
+        window.location.replace(destino);
+      } catch (e) {
+        // Si hay un error al leer la sesión, la borramos por seguridad
+        localStorage.removeItem('jarvaz_sesion');
+      }
+    }
+  }
+
+  function mostrarSesionActiva(user) {
+    const badge = document.getElementById('sessionBadge');
+    const avatar = document.getElementById('sessionAvatar');
+    const nombre = document.getElementById('sessionName');
+    const tipo = document.getElementById('sessionType');
+    const palabras = String(user.nombres || '').split(' ');
+    const iniciales = (palabras[0] ? palabras[0][0] : '') + (palabras[1] ? palabras[1][0] : (palabras[0] ? palabras[0][1] : 'U'));
+    avatar.textContent = iniciales.toUpperCase();
+    nombre.textContent = (user.nombres + (user.apellidos ? ' ' + user.apellidos : '')) || 'Usuario';
+    const tipos = { 'secundaria': 'Alumno de Secundaria', 'publico': 'Público en General', 'profesor': 'Profesor Académico' };
+    tipo.textContent = tipos[user.categoria || user.tipo] || 'Sesión activa';
+    badge.classList.add('active');
+  }
+
+  function cerrarSesion() {
+    if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
+      localStorage.removeItem('jarvaz_sesion');
+      location.reload(); // Recarga para mostrar el formulario de login
+    }
+  }
+
+  const SVG_EYE_OPEN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const SVG_EYE_CLOSED = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+  function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.innerHTML = SVG_EYE_CLOSED;
+      btn.setAttribute('aria-label', 'Ocultar contraseña');
+    } else {
+      input.type = 'password';
+      btn.innerHTML = SVG_EYE_OPEN;
+      btn.setAttribute('aria-label', 'Mostrar contraseña');
+    }
+  }
+
+  const categoriaSelect = document.getElementById("categoria");
+  const forms = {
+    secundaria: document.getElementById("formSecundaria"),
+    publico: document.getElementById("formPublico"),
+    profesor: document.getElementById("formProfesor")
+  };
+
+  function resetProfesorForm() {
+    document.getElementById('profPaso1').classList.remove('hidden');
+    document.getElementById('profPaso2').classList.add('hidden');
+    const cod = document.getElementById('prof_codigo');
+    if (cod) cod.value = '';
+    window._profCodigo = '';
+  }
+
+  document.getElementById("btnCrearCuenta").addEventListener("click", function () {
+    categoriaSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => categoriaSelect.focus(), 400);
+    showAlert('Selecciona tu categoría para crear tu cuenta', 'info');
+  });
+
+  categoriaSelect.addEventListener("change", () => {
+    const value = categoriaSelect.value;
+    Object.values(forms).forEach(f => f.classList.add("hidden"));
+    const notice = document.getElementById('profesorNotice');
+    const floatingWrap = document.getElementById('floatingBtnWrap');
+    notice.style.display = 'none';
+    floatingWrap.classList.remove('active');
+    if (value && forms[value]) {
+      forms[value].classList.remove("hidden");
+      if (value === 'profesor') {
+        notice.style.display = 'block';
+        floatingWrap.classList.add('active');
+        resetProfesorForm();
+      }
+    }
+  });
+
+  function showAlert(message, type) {
+    const box = document.getElementById('alertBox');
+    box.className = 'alert alert-' + type;
+    box.textContent = message;
+    box.style.display = 'block';
+  }
+  function hideAlert() { document.getElementById('alertBox').style.display = 'none'; }
+
+  function enviarWhatsApp(event) {
+    event.preventDefault();
+    const elN = document.getElementById('prof_nombre');
+    const elA = document.getElementById('prof_apellidos');
+    const elC = document.getElementById('prof_especialidad');
+    const nombreProfesor = ((elN ? elN.value.trim() : '') + ' ' + (elA ? elA.value.trim() : '')).trim();
+    const curso = elC ? elC.value.trim() : '';
+    let mensaje;
+    if (nombreProfesor && curso) mensaje = `Hola, soy el maestro [${nombreProfesor}], del curso [${curso}], y quiero que me indique mi código de acceso JARVAZ.`;
+    else if (nombreProfesor) mensaje = `Hola, soy el maestro [${nombreProfesor}], y quiero que me indique mi código de acceso JARVAZ.`;
+    else mensaje = 'Hola, soy el profesor [...] del curso de [...] y quiero que me indique mi código de acceso JARVAZ.';
+    window.open(`https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`, '_blank');
+  }
+
+  async function saveUser(form, category) {
+    hideAlert();
+    const v = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
+    const params = { action: 'registrarUsuario', tipo: category };
+    if (category === 'secundaria') {
+      params.nombres = v('sec_nombre'); params.apellidos = v('sec_apellidos');
+      params.email = v('sec_email'); params.telefono = v('sec_telefono');
+      params.password = v('sec_password'); params.fechaNacimiento = v('sec_nacimiento');
+      params.colegio = v('sec_colegio'); params.grado = v('sec_grado');
+    } else {
+      params.nombres = v('pub_nombre'); params.apellidos = v('pub_apellidos');
+      params.email = v('pub_email'); params.telefono = v('pub_telefono');
+      params.password = v('pub_password'); params.fechaNacimiento = v('pub_nacimiento');
+    }
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Guardando...';
+    try {
+      const res = await llamarAPI(params);
+      if (res.status === 'success') {
+        const user = {
+          id: res.id, tipo: category, categoria: category,
+          nombres: params.nombres, apellidos: params.apellidos, email: params.email,
+          telefono: params.telefono, colegio: params.colegio || '', grado: params.grado || '',
+          especialidad: '', codigoProfesor: ''
+        };
+        localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
+        mostrarSesionActiva(user);
+        showAlert('✅ ¡Cuenta creada! Tus datos ya están en la nube. Redirigiendo...', 'success');
+        setTimeout(() => { window.location.href = "inicio_de_sesion_general.html"; }, 1800);
+      } else {
+        showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
+      }
+    } catch (err) {
+      showAlert('⚠️ ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = 'Crear Cuenta';
+    }
+  }
+
+  ['secundaria', 'publico'].forEach(cat => {
+    forms[cat].addEventListener("submit", e => { e.preventDefault(); saveUser(forms[cat], cat); });
+  });
+
+  async function verificarCodigoProfesor() {
+    hideAlert();
+    const codigo = document.getElementById('prof_codigo').value.trim();
+    if (!codigo) { showAlert('Ingresa tu código de profesor JARVAZ', 'error'); return; }
+    const btn = document.getElementById('btnProfVerificar');
+    btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando...';
+    try {
+      const res = await llamarAPI({ action: 'verificarCodigoProfesor', codigo: codigo });
+      if (res.status === 'success') {
+        if (res.modo === 'reingreso') {
+          const user = normalizarProfesor(res.user);
+          localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
+          mostrarSesionActiva(user);
+          showAlert('✅ ¡Bienvenido de vuelta, profesor ' + (user.nombres || '') + '!', 'success');
+          setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1200);
+        } else {
+          window._profCodigo = codigo;
+          showAlert('✨ Código válido. Completa tus datos para activar tu cuenta.', 'info');
+          document.getElementById('profPaso1').classList.add('hidden');
+          document.getElementById('profPaso2').classList.remove('hidden');
+        }
+      } else {
+        showAlert('❌ ' + (res.message || 'Código no válido'), 'error');
+      }
+    } catch (err) {
+      showAlert('⚠️ ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = 'Verificar código';
+    }
+  }
+
+  async function registrarProfesor() {
+    hideAlert();
+    const v = id => document.getElementById(id).value.trim();
+    const codigo = window._profCodigo || document.getElementById('prof_codigo').value.trim();
+    if (!v('prof_nombre') || !v('prof_apellidos') || !v('prof_especialidad') ||
+        !v('prof_email') || !v('prof_telefono') || !v('prof_nacimiento')) {
+      showAlert('Completa todos los campos', 'error');
+      return;
+    }
+    const params = {
+      action: 'registrarProfesor', codigoProfesor: codigo,
+      nombres: v('prof_nombre'), apellidos: v('prof_apellidos'), especialidad: v('prof_especialidad'),
+      fechaNacimiento: v('prof_nacimiento'), email: v('prof_email'), telefono: v('prof_telefono')
+    };
+    try {
+      const res = await llamarAPI(params);
+      if (res.status === 'success') {
+        const user = {
+          id: codigo, tipo: 'profesor', categoria: 'profesor',
+          nombres: params.nombres, apellidos: params.apellidos, especialidad: params.especialidad,
+          email: params.email, telefono: params.telefono, codigoProfesor: codigo
+        };
+        localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
+        mostrarSesionActiva(user);
+        showAlert('✅ ¡Cuenta de profesor activada! Redirigiendo...', 'success');
+        setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1500);
+      } else {
+        showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
+      }
+    } catch (err) {
+      showAlert('⚠️ ' + err.message, 'error');
+    }
+  }
+
+  document.getElementById("btnLogin").addEventListener("click", async () => {
+    hideAlert();
+    const contacto = document.getElementById("login_contacto").value.trim();
+    const password = document.getElementById("login_password").value;
+    if (!contacto || !password) { showAlert("Completa correo/teléfono y contraseña", 'error'); return; }
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando...';
+    try {
+      const res = await llamarAPI({ action: 'login', contacto: contacto, password: password });
+      if (res.status === 'success' && res.user) {
+        const user = normalizarUsuario(res.user);
+        localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
+        mostrarSesionActiva(user);
+        showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
+        setTimeout(() => {
+          window.location.href = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
+        }, 1200);
+      } else {
+        showAlert('❌ ' + (res.message || 'Credenciales incorrectas'), 'error');
+      }
+    } catch (err) {
+      showAlert('⚠️ ' + err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
+    }
+  });
+
+  // ✅ Se ejecuta al cargar la página para verificar si debe redirigir
+  window.addEventListener('DOMContentLoaded', () => { verificarSesion(); });
+</script>
+</body>
+</html>
