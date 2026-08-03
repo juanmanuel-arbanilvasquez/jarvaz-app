@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-900-normal.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- ✅ GOOGLE SIGN-IN -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; }
@@ -103,6 +105,7 @@
   input { background:rgba(255,255,255,0.08); color:#fff; }
   input::placeholder { color:rgba(232,213,216,0.5); font-size:0.95em; }
   select:focus, input:focus { outline:none; border-color:var(--oro-500); background:rgba(212,175,55,0.08); box-shadow:0 0 0 2px rgba(212,175,55,0.15); }
+  input[readonly] { background:rgba(212,175,55,0.1); border-color:rgba(212,175,55,0.4); cursor:not-allowed; }
   
   .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
   .form-grid input { margin:0; }
@@ -115,6 +118,83 @@
   
   .profesor-notice { background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(139,26,42,0.12)); border:1px solid rgba(212,175,55,0.35); border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:0.7em; color:var(--crema); text-align:left; line-height:1.4; display:none; flex-shrink:0; }
   .profesor-notice strong { display:block; color:var(--oro-400); margin-bottom:2px; font-size:0.95em; }
+  
+  /* ✅ BOTÓN GOOGLE SIGN-IN */
+  .google-auth-section {
+    background: linear-gradient(135deg, rgba(66,133,244,0.15), rgba(219,68,55,0.08));
+    border: 1px solid rgba(66,133,244,0.4);
+    border-radius: 10px;
+    padding: 10px;
+    margin: 6px 0 10px;
+    text-align: center;
+  }
+  .google-auth-section p {
+    font-size: 0.72em;
+    color: #b0c4de;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .google-auth-section p i {
+    color: var(--oro-400);
+    margin-right: 4px;
+  }
+  .google-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    min-height: 40px;
+  }
+  .google-verified {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 6px;
+  }
+  .google-verified.active { display: flex; }
+  .google-verified img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--oro-400);
+  }
+  .google-verified-info {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+  }
+  .google-verified-name {
+    font-size: 0.82em;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .google-verified-email {
+    font-size: 0.7em;
+    color: #86efac;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .google-verified-check {
+    color: #22c55e;
+    font-size: 1.2em;
+    flex-shrink: 0;
+  }
+  .security-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65em;
+    color: var(--oro-300);
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .security-badge i { color: var(--oro-500); }
   
   .floating-btn-wrap { margin-top:6px; display:none; flex-shrink:0; }
   .floating-btn-wrap.active { display:block; animation:fadeIn 0.4s; }
@@ -132,7 +212,6 @@
   .btn-gold:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(212,175,55,0.5); }
   button:disabled { opacity:0.6; cursor:not-allowed; transform:none !important; }
   
-  /* ✅ NUEVO: Botón de Vista Previa */
   .preview-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%; padding: 10px; margin-top: 8px;
@@ -175,6 +254,7 @@
     .divider { margin:7px 0 4px; } .footer { margin-top:5px; padding-top:5px; }
     .date-label { margin:3px 0 1px; font-size:0.65em; }
     .session-badge { margin-bottom:7px; padding:7px 9px; }
+    .google-auth-section { padding:8px; margin:4px 0 8px; }
   }
   @media (max-height:600px) {
     .container { padding:10px 16px; } .logo-wrap { width:50px; height:50px; } .logo-svg { width:50px; height:50px; }
@@ -196,6 +276,15 @@
 </style>
 </head>
 <body>
+
+<!-- ✅ CONFIGURACIÓN DE GOOGLE SIGN-IN -->
+<div id="g_id_onload"
+     data-client_id="484497769939-449tu3aocgdg9q34lornq338mu7ulmg2.apps.googleusercontent.com"
+     data-context="signin"
+     data-ux_mode="popup"
+     data-callback="handleGoogleCredential"
+     data-auto_prompt="false">
+</div>
 
 <div class="container">
   <div class="header-compact">
@@ -265,6 +354,23 @@
       Ingresa tu código de activación. Si no lo tienes, solicítalo con el botón de abajo.
     </div>
 
+    <!-- ✅ SECCIÓN GOOGLE PARA ALUMNO SECUNDARIA -->
+    <div id="googleAuthSecundaria" class="google-auth-section hidden">
+      <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail para crear una cuenta segura</p>
+      <div class="google-btn-wrapper">
+        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+      </div>
+      <div class="google-verified" id="googleVerifiedSecundaria">
+        <img id="googlePicSec" src="" alt="">
+        <div class="google-verified-info">
+          <div class="google-verified-name" id="googleNameSec"></div>
+          <div class="google-verified-email" id="googleEmailSec"></div>
+        </div>
+        <i class="fas fa-circle-check google-verified-check"></i>
+      </div>
+      <div class="security-badge"><i class="fas fa-lock"></i> Protegido por Google · Nadie podrá entrar sin tu Gmail</div>
+    </div>
+
     <form id="formSecundaria" class="hidden form-animated">
       <div class="form-grid">
         <input type="text" id="sec_nombre" placeholder="Nombres" required>
@@ -276,16 +382,33 @@
       </div>
       <label class="date-label">Fecha de nacimiento</label>
       <input type="date" id="sec_nacimiento" required>
-      <input type="email" id="sec_email" placeholder="Correo Electrónico" required>
+      <input type="email" id="sec_email" placeholder="Correo de Gmail (verificado)" required readonly>
       <input type="tel" id="sec_telefono" placeholder="Teléfono (WhatsApp)" pattern="[0-9]{9}" required>
       <div class="password-wrap">
-        <input type="password" id="sec_password" placeholder="Contraseña (mín. 6 caracteres)" minlength="6" required>
+        <input type="password" id="sec_password" placeholder="Contraseña JARVAZ (mín. 6 caracteres)" minlength="6" required>
         <button type="button" class="toggle-password" onclick="togglePassword('sec_password', this)" aria-label="Mostrar contraseña">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
-      <button type="submit" class="btn-gold">Crear Cuenta</button>
+      <button type="submit" class="btn-gold">Crear Cuenta Segura</button>
     </form>
+
+    <!-- ✅ SECCIÓN GOOGLE PARA PÚBLICO -->
+    <div id="googleAuthPublico" class="google-auth-section hidden">
+      <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail para crear una cuenta segura</p>
+      <div class="google-btn-wrapper">
+        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+      </div>
+      <div class="google-verified" id="googleVerifiedPublico">
+        <img id="googlePicPub" src="" alt="">
+        <div class="google-verified-info">
+          <div class="google-verified-name" id="googleNamePub"></div>
+          <div class="google-verified-email" id="googleEmailPub"></div>
+        </div>
+        <i class="fas fa-circle-check google-verified-check"></i>
+      </div>
+      <div class="security-badge"><i class="fas fa-lock"></i> Protegido por Google · Nadie podrá entrar sin tu Gmail</div>
+    </div>
 
     <form id="formPublico" class="hidden form-animated">
       <div class="form-grid">
@@ -294,16 +417,33 @@
       </div>
       <label class="date-label">Fecha de nacimiento</label>
       <input type="date" id="pub_nacimiento" required>
-      <input type="email" id="pub_email" placeholder="Correo Electrónico" required>
+      <input type="email" id="pub_email" placeholder="Correo de Gmail (verificado)" required readonly>
       <input type="tel" id="pub_telefono" placeholder="Teléfono (WhatsApp)" pattern="[0-9]{9}" required>
       <div class="password-wrap">
-        <input type="password" id="pub_password" placeholder="Contraseña (mín. 6 caracteres)" minlength="6" required>
+        <input type="password" id="pub_password" placeholder="Contraseña JARVAZ (mín. 6 caracteres)" minlength="6" required>
         <button type="button" class="toggle-password" onclick="togglePassword('pub_password', this)" aria-label="Mostrar contraseña">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
-      <button type="submit" class="btn-gold">Crear Cuenta</button>
+      <button type="submit" class="btn-gold">Crear Cuenta Segura</button>
     </form>
+
+    <!-- ✅ SECCIÓN GOOGLE PARA PROFESOR -->
+    <div id="googleAuthProfesor" class="google-auth-section hidden">
+      <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail</p>
+      <div class="google-btn-wrapper">
+        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="filled_black" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+      </div>
+      <div class="google-verified" id="googleVerifiedProfesor">
+        <img id="googlePicProf" src="" alt="">
+        <div class="google-verified-info">
+          <div class="google-verified-name" id="googleNameProf"></div>
+          <div class="google-verified-email" id="googleEmailProf"></div>
+        </div>
+        <i class="fas fa-circle-check google-verified-check"></i>
+      </div>
+      <div class="security-badge"><i class="fas fa-lock"></i> Protegido por Google</div>
+    </div>
 
     <form id="formProfesor" class="hidden form-animated">
       <div id="profPaso1">
@@ -322,7 +462,7 @@
         <input type="text" id="prof_especialidad" placeholder="Curso / Especialidad (ej: Matemática)">
         <label class="date-label">Fecha de nacimiento</label>
         <input type="date" id="prof_nacimiento">
-        <input type="email" id="prof_email" placeholder="Correo Electrónico">
+        <input type="email" id="prof_email" placeholder="Correo de Gmail (verificado)" readonly>
         <input type="tel" id="prof_telefono" placeholder="Teléfono (WhatsApp)" pattern="[0-9]{9}">
         <button type="button" class="btn-gold" onclick="registrarProfesor()">Completar registro</button>
       </div>
@@ -339,16 +479,16 @@
 
     <input type="text" id="login_contacto" placeholder="Correo o Teléfono">
     <div class="password-wrap">
-      <input type="password" id="login_password" placeholder="Contraseña">
+      <input type="password" id="login_password" placeholder="Contraseña JARVAZ">
       <button type="button" class="toggle-password" onclick="togglePassword('login_password', this)" aria-label="Mostrar contraseña">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
     <button id="btnLogin" class="btn-primary">Iniciar Sesión</button>
+    <div class="security-badge" style="margin-top:6px;"><i class="fas fa-shield-halved"></i> Se verifica tu Gmail activo al iniciar sesión</div>
   </div>
 
   <div class="footer">
-    <!-- ✅ NUEVO: Botón de Vista Previa que limpia la sesión y va al dashboard -->
     <a href="inicio_de_sesion_general.html" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion');">
       <i class="fas fa-eye"></i> Vista Previa del App (Modo Invitado)
     </a>
@@ -361,11 +501,78 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
   const WHATSAPP_ADMIN = '51973441252';
 
+  // ✅ ESTADO GLOBAL DE GOOGLE
+  let googleUserActual = null;
+  let formularioActivo = null;
+
+  // ============================================================
+  // GOOGLE SIGN-IN: Callback que se ejecuta al elegir cuenta
+  // ============================================================
+  function handleGoogleCredential(response) {
+    try {
+      const payload = decodeJwt(response.credential);
+      googleUserActual = {
+        email: payload.email,
+        name: payload.name,
+        given_name: payload.given_name,
+        family_name: payload.family_name,
+        picture: payload.picture,
+        sub: payload.sub,
+        email_verified: payload.email_verified
+      };
+
+      console.log('✅ Usuario de Google verificado:', googleUserActual);
+
+      if (formularioActivo === 'secundaria') {
+        document.getElementById('sec_nombre').value = payload.given_name || '';
+        document.getElementById('sec_apellidos').value = payload.family_name || '';
+        document.getElementById('sec_email').value = payload.email;
+        document.getElementById('googleNameSec').textContent = payload.name;
+        document.getElementById('googleEmailSec').textContent = payload.email;
+        document.getElementById('googlePicSec').src = payload.picture;
+        document.getElementById('googleVerifiedSecundaria').classList.add('active');
+        document.querySelector('#googleAuthSecundaria .google-btn-wrapper').style.display = 'none';
+      } else if (formularioActivo === 'publico') {
+        document.getElementById('pub_nombre').value = payload.given_name || '';
+        document.getElementById('pub_apellidos').value = payload.family_name || '';
+        document.getElementById('pub_email').value = payload.email;
+        document.getElementById('googleNamePub').textContent = payload.name;
+        document.getElementById('googleEmailPub').textContent = payload.email;
+        document.getElementById('googlePicPub').src = payload.picture;
+        document.getElementById('googleVerifiedPublico').classList.add('active');
+        document.querySelector('#googleAuthPublico .google-btn-wrapper').style.display = 'none';
+      } else if (formularioActivo === 'profesor') {
+        document.getElementById('prof_nombre').value = payload.given_name || '';
+        document.getElementById('prof_apellidos').value = payload.family_name || '';
+        document.getElementById('prof_email').value = payload.email;
+        document.getElementById('googleNameProf').textContent = payload.name;
+        document.getElementById('googleEmailProf').textContent = payload.email;
+        document.getElementById('googlePicProf').src = payload.picture;
+        document.getElementById('googleVerifiedProfesor').classList.add('active');
+        document.querySelector('#googleAuthProfesor .google-btn-wrapper').style.display = 'none';
+      }
+
+      showAlert('✅ Identidad verificada con Google. Completa los demás campos.', 'success');
+    } catch (err) {
+      console.error('Error al procesar Google:', err);
+      showAlert('❌ Error al verificar con Google. Intenta de nuevo.', 'error');
+    }
+  }
+
+  function decodeJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
   function llamarAPI(params) {
     return new Promise((resolve, reject) => {
       const cbName = 'jarvaz_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
       const script = document.createElement('script');
-      const timer = setTimeout(() => { cleanup(); reject(new Error('Tiempo de espera agotado. Revisa tu conexión.')); }, 15000);
+      const timer = setTimeout(() => { cleanup(); reject(new Error('Tiempo de espera agotado.')); }, 15000);
       function cleanup() {
         clearTimeout(timer);
         try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
@@ -377,7 +584,7 @@
         .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] == null ? '' : params[k]))
         .join('&');
       script.src = API_URL + '?' + qs;
-      script.onerror = function () { cleanup(); reject(new Error('No se pudo conectar con el servidor.')); };
+      script.onerror = function () { cleanup(); reject(new Error('No se pudo conectar.')); };
       document.head.appendChild(script);
     });
   }
@@ -386,7 +593,7 @@
     return {
       id: u.ID, tipo: String(u.Tipo || '').toLowerCase(), categoria: String(u.Tipo || '').toLowerCase(),
       nombres: u.Nombres, apellidos: u.Apellidos, email: u.Email, telefono: u.Telefono,
-      colegio: u.Colegio, grado: u.Grado, especialidad: u.Especialidad, codigoProfesor: u.CodigoProfesor
+      colegio: u.Colegio, grado: u.Grado, googleSub: u.GoogleSub || ''
     };
   }
 
@@ -404,8 +611,7 @@
       const p = document.createElement('div');
       p.className = 'particle';
       const size = Math.random() * 3 + 1.5;
-      p.style.width = size + 'px';
-      p.style.height = size + 'px';
+      p.style.width = size + 'px'; p.style.height = size + 'px';
       p.style.left = Math.random() * 100 + '%';
       p.style.animationDuration = (Math.random() * 15 + 10) + 's';
       p.style.animationDelay = Math.random() * 10 + 's';
@@ -417,37 +623,27 @@
   function crearPolvoBrillante() {
     const container = document.getElementById('sparkleContainer');
     if (!container) return;
-    const numSparkles = 6;
-    for (let i = 0; i < numSparkles; i++) {
+    for (let i = 0; i < 6; i++) {
       const sparkle = document.createElement('div');
       sparkle.className = 'sparkle';
       const duration = 6 + Math.random() * 4;
-      const delay = (i / numSparkles) * duration;
       sparkle.style.animationDuration = duration + 's';
-      sparkle.style.animationDelay = '-' + delay + 's';
+      sparkle.style.animationDelay = '-' + ((i / 6) * duration) + 's';
       container.appendChild(sparkle);
     }
   }
   crearPolvoBrillante();
 
-  // ✅ MEJORADO: Redirección automática si ya hay sesión
   function verificarSesion() {
     const sesion = localStorage.getItem('jarvaz_sesion');
     if (sesion) {
       try {
         const user = JSON.parse(sesion);
         const tipo = (user.tipo || user.categoria || '').toLowerCase();
-        
-        // Determinar a dónde redirigir
         let destino = 'inicio_de_sesion_general.html';
-        if (tipo === 'profesor') {
-          destino = 'inicio_de_sesion_profesor.html';
-        }
-        
-        // Redirigir inmediatamente (replace evita que el usuario pueda volver atrás con el botón del navegador)
+        if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
         window.location.replace(destino);
       } catch (e) {
-        // Si hay un error al leer la sesión, la borramos por seguridad
         localStorage.removeItem('jarvaz_sesion');
       }
     }
@@ -459,7 +655,7 @@
     const nombre = document.getElementById('sessionName');
     const tipo = document.getElementById('sessionType');
     const palabras = String(user.nombres || '').split(' ');
-    const iniciales = (palabras[0] ? palabras[0][0] : '') + (palabras[1] ? palabras[1][0] : (palabras[0] ? palabras[0][1] : 'U'));
+    const iniciales = (palabras[0] ? palabras[0][0] : '') + (palabras[1] ? palabras[1][0] : 'U');
     avatar.textContent = iniciales.toUpperCase();
     nombre.textContent = (user.nombres + (user.apellidos ? ' ' + user.apellidos : '')) || 'Usuario';
     const tipos = { 'secundaria': 'Alumno de Secundaria', 'publico': 'Público en General', 'profesor': 'Profesor Académico' };
@@ -470,7 +666,7 @@
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
       localStorage.removeItem('jarvaz_sesion');
-      location.reload(); // Recarga para mostrar el formulario de login
+      location.reload();
     }
   }
 
@@ -480,12 +676,10 @@
   function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
     if (input.type === 'password') {
-      input.type = 'text';
-      btn.innerHTML = SVG_EYE_CLOSED;
+      input.type = 'text'; btn.innerHTML = SVG_EYE_CLOSED;
       btn.setAttribute('aria-label', 'Ocultar contraseña');
     } else {
-      input.type = 'password';
-      btn.innerHTML = SVG_EYE_OPEN;
+      input.type = 'password'; btn.innerHTML = SVG_EYE_OPEN;
       btn.setAttribute('aria-label', 'Mostrar contraseña');
     }
   }
@@ -495,6 +689,11 @@
     secundaria: document.getElementById("formSecundaria"),
     publico: document.getElementById("formPublico"),
     profesor: document.getElementById("formProfesor")
+  };
+  const googleAuths = {
+    secundaria: document.getElementById("googleAuthSecundaria"),
+    publico: document.getElementById("googleAuthPublico"),
+    profesor: document.getElementById("googleAuthProfesor")
   };
 
   function resetProfesorForm() {
@@ -513,17 +712,57 @@
 
   categoriaSelect.addEventListener("change", () => {
     const value = categoriaSelect.value;
+    formularioActivo = value || null;
+    
     Object.values(forms).forEach(f => f.classList.add("hidden"));
+    Object.values(googleAuths).forEach(g => g.classList.add("hidden"));
+    
     const notice = document.getElementById('profesorNotice');
     const floatingWrap = document.getElementById('floatingBtnWrap');
     notice.style.display = 'none';
     floatingWrap.classList.remove('active');
+    
     if (value && forms[value]) {
       forms[value].classList.remove("hidden");
+      googleAuths[value].classList.remove("hidden");
+      
       if (value === 'profesor') {
         notice.style.display = 'block';
         floatingWrap.classList.add('active');
         resetProfesorForm();
+      }
+
+      if (googleUserActual) {
+        setTimeout(() => {
+          if (formularioActivo === 'secundaria') {
+            document.getElementById('sec_nombre').value = googleUserActual.given_name || '';
+            document.getElementById('sec_apellidos').value = googleUserActual.family_name || '';
+            document.getElementById('sec_email').value = googleUserActual.email;
+            document.getElementById('googleNameSec').textContent = googleUserActual.name;
+            document.getElementById('googleEmailSec').textContent = googleUserActual.email;
+            document.getElementById('googlePicSec').src = googleUserActual.picture;
+            document.getElementById('googleVerifiedSecundaria').classList.add('active');
+            document.querySelector('#googleAuthSecundaria .google-btn-wrapper').style.display = 'none';
+          } else if (formularioActivo === 'publico') {
+            document.getElementById('pub_nombre').value = googleUserActual.given_name || '';
+            document.getElementById('pub_apellidos').value = googleUserActual.family_name || '';
+            document.getElementById('pub_email').value = googleUserActual.email;
+            document.getElementById('googleNamePub').textContent = googleUserActual.name;
+            document.getElementById('googleEmailPub').textContent = googleUserActual.email;
+            document.getElementById('googlePicPub').src = googleUserActual.picture;
+            document.getElementById('googleVerifiedPublico').classList.add('active');
+            document.querySelector('#googleAuthPublico .google-btn-wrapper').style.display = 'none';
+          } else if (formularioActivo === 'profesor') {
+            document.getElementById('prof_nombre').value = googleUserActual.given_name || '';
+            document.getElementById('prof_apellidos').value = googleUserActual.family_name || '';
+            document.getElementById('prof_email').value = googleUserActual.email;
+            document.getElementById('googleNameProf').textContent = googleUserActual.name;
+            document.getElementById('googleEmailProf').textContent = googleUserActual.email;
+            document.getElementById('googlePicProf').src = googleUserActual.picture;
+            document.getElementById('googleVerifiedProfesor').classList.add('active');
+            document.querySelector('#googleAuthProfesor .google-btn-wrapper').style.display = 'none';
+          }
+        }, 100);
       }
     }
   });
@@ -552,8 +791,21 @@
 
   async function saveUser(form, category) {
     hideAlert();
+    
+    if (!googleUserActual) {
+      showAlert('🔒 Primero debes verificar tu identidad con Google (botón "Sign in with Google")', 'error');
+      return;
+    }
+    
     const v = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
-    const params = { action: 'registrarUsuario', tipo: category };
+    const params = { 
+      action: 'registrarUsuario', 
+      tipo: category,
+      googleSub: googleUserActual.sub,
+      emailGoogle: googleUserActual.email,
+      emailVerified: googleUserActual.email_verified ? 'SI' : 'NO'
+    };
+    
     if (category === 'secundaria') {
       params.nombres = v('sec_nombre'); params.apellidos = v('sec_apellidos');
       params.email = v('sec_email'); params.telefono = v('sec_telefono');
@@ -564,6 +816,12 @@
       params.email = v('pub_email'); params.telefono = v('pub_telefono');
       params.password = v('pub_password'); params.fechaNacimiento = v('pub_nacimiento');
     }
+
+    if (params.email.toLowerCase() !== googleUserActual.email.toLowerCase()) {
+      showAlert('❌ El email debe ser el de tu cuenta de Gmail verificada', 'error');
+      return;
+    }
+
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Guardando...';
     try {
@@ -573,11 +831,13 @@
           id: res.id, tipo: category, categoria: category,
           nombres: params.nombres, apellidos: params.apellidos, email: params.email,
           telefono: params.telefono, colegio: params.colegio || '', grado: params.grado || '',
-          especialidad: '', codigoProfesor: ''
+          googleSub: googleUserActual.sub,
+          googlePic: googleUserActual.picture,
+          authMethod: 'google'
         };
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
-        showAlert('✅ ¡Cuenta creada! Tus datos ya están en la nube. Redirigiendo...', 'success');
+        showAlert('✅ ¡Cuenta segura creada! Tus datos están protegidos con Google. Redirigiendo...', 'success');
         setTimeout(() => { window.location.href = "inicio_de_sesion_general.html"; }, 1800);
       } else {
         showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
@@ -585,7 +845,7 @@
     } catch (err) {
       showAlert('⚠️ ' + err.message, 'error');
     } finally {
-      btn.disabled = false; btn.innerHTML = 'Crear Cuenta';
+      btn.disabled = false; btn.innerHTML = 'Crear Cuenta Segura';
     }
   }
 
@@ -595,12 +855,23 @@
 
   async function verificarCodigoProfesor() {
     hideAlert();
+    
+    if (!googleUserActual) {
+      showAlert('🔒 Primero verifica tu identidad con Google', 'error');
+      return;
+    }
+    
     const codigo = document.getElementById('prof_codigo').value.trim();
     if (!codigo) { showAlert('Ingresa tu código de profesor JARVAZ', 'error'); return; }
     const btn = document.getElementById('btnProfVerificar');
     btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando...';
     try {
-      const res = await llamarAPI({ action: 'verificarCodigoProfesor', codigo: codigo });
+      const res = await llamarAPI({ 
+        action: 'verificarCodigoProfesor', 
+        codigo: codigo,
+        googleSub: googleUserActual.sub,
+        emailGoogle: googleUserActual.email
+      });
       if (res.status === 'success') {
         if (res.modo === 'reingreso') {
           const user = normalizarProfesor(res.user);
@@ -610,7 +881,7 @@
           setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1200);
         } else {
           window._profCodigo = codigo;
-          showAlert('✨ Código válido. Completa tus datos para activar tu cuenta.', 'info');
+          showAlert('✨ Código válido. Completa tus datos.', 'info');
           document.getElementById('profPaso1').classList.add('hidden');
           document.getElementById('profPaso2').classList.remove('hidden');
         }
@@ -626,6 +897,10 @@
 
   async function registrarProfesor() {
     hideAlert();
+    if (!googleUserActual) {
+      showAlert('🔒 Verifica tu identidad con Google primero', 'error');
+      return;
+    }
     const v = id => document.getElementById(id).value.trim();
     const codigo = window._profCodigo || document.getElementById('prof_codigo').value.trim();
     if (!v('prof_nombre') || !v('prof_apellidos') || !v('prof_especialidad') ||
@@ -636,7 +911,8 @@
     const params = {
       action: 'registrarProfesor', codigoProfesor: codigo,
       nombres: v('prof_nombre'), apellidos: v('prof_apellidos'), especialidad: v('prof_especialidad'),
-      fechaNacimiento: v('prof_nacimiento'), email: v('prof_email'), telefono: v('prof_telefono')
+      fechaNacimiento: v('prof_nacimiento'), email: v('prof_email'), telefono: v('prof_telefono'),
+      googleSub: googleUserActual.sub
     };
     try {
       const res = await llamarAPI(params);
@@ -644,11 +920,12 @@
         const user = {
           id: codigo, tipo: 'profesor', categoria: 'profesor',
           nombres: params.nombres, apellidos: params.apellidos, especialidad: params.especialidad,
-          email: params.email, telefono: params.telefono, codigoProfesor: codigo
+          email: params.email, telefono: params.telefono, codigoProfesor: codigo,
+          googleSub: googleUserActual.sub
         };
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
-        showAlert('✅ ¡Cuenta de profesor activada! Redirigiendo...', 'success');
+        showAlert('✅ ¡Cuenta de profesor activada!', 'success');
         setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1500);
       } else {
         showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
@@ -663,12 +940,34 @@
     const contacto = document.getElementById("login_contacto").value.trim();
     const password = document.getElementById("login_password").value;
     if (!contacto || !password) { showAlert("Completa correo/teléfono y contraseña", 'error'); return; }
+    
     const btn = document.getElementById('btnLogin');
-    btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando...';
+    btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando identidad...';
+    
     try {
       const res = await llamarAPI({ action: 'login', contacto: contacto, password: password });
+      
       if (res.status === 'success' && res.user) {
         const user = normalizarUsuario(res.user);
+        
+        if (user.googleSub && user.googleSub !== '') {
+          if (!googleUserActual) {
+            showAlert('🔒 Por seguridad, confirma tu identidad con Google para continuar', 'info');
+            window._loginPendiente = { user, contacto, password };
+            document.getElementById('googleAuthSecundaria').classList.remove('hidden');
+            document.getElementById('googleAuthSecundaria').scrollIntoView({ behavior: 'smooth' });
+            formularioActivo = 'login';
+            btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
+            return;
+          }
+          
+          if (googleUserActual.sub !== user.googleSub) {
+            showAlert('❌ Acceso denegado: Debes iniciar sesión con el mismo Gmail que usaste al registrarte (' + user.email + ')', 'error');
+            btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
+            return;
+          }
+        }
+        
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
         showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
@@ -677,15 +976,34 @@
         }, 1200);
       } else {
         showAlert('❌ ' + (res.message || 'Credenciales incorrectas'), 'error');
+        btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
       }
     } catch (err) {
       showAlert('⚠️ ' + err.message, 'error');
-    } finally {
       btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
     }
   });
 
-  // ✅ Se ejecuta al cargar la página para verificar si debe redirigir
+  const _handleGoogleCredentialOriginal = handleGoogleCredential;
+  handleGoogleCredential = function(response) {
+    _handleGoogleCredentialOriginal(response);
+    
+    if (window._loginPendiente && googleUserActual) {
+      const { user } = window._loginPendiente;
+      if (googleUserActual.sub === user.googleSub) {
+        localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
+        mostrarSesionActiva(user);
+        showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
+        setTimeout(() => {
+          window.location.href = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
+        }, 1000);
+      } else {
+        showAlert('❌ Ese Gmail no corresponde a esta cuenta. Usa: ' + user.email, 'error');
+      }
+      window._loginPendiente = null;
+    }
+  };
+
   window.addEventListener('DOMContentLoaded', () => { verificarSesion(); });
 </script>
 </body>
