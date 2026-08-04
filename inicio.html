@@ -10,7 +10,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-900-normal.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- ✅ GOOGLE SIGN-IN -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -276,7 +275,6 @@
 </head>
 <body>
 
-<!-- ✅ CONFIGURACIÓN DE GOOGLE SIGN-IN -->
 <div id="g_id_onload"
      data-client_id="484497769939-449tu3aocgdg9q34lornq338mu7ulmg2.apps.googleusercontent.com"
      data-context="signin"
@@ -485,7 +483,8 @@
   </div>
 
   <div class="footer">
-    <a href="inicio_de_sesion_general.html" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion'); localStorage.removeItem('jarvaz_premium_sesion');">
+    <!-- ✅ ÚNICO CAMBIO: Agregado ?preview=1 al href -->
+    <a href="inicio_de_sesion_general.html?preview=1" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion'); localStorage.removeItem('jarvaz_premium_sesion');">
       <i class="fas fa-eye"></i> Vista Previa del App (Modo Invitado)
     </a>
     <br>
@@ -626,7 +625,6 @@
   }
   crearPolvoBrillante();
 
-  // ✅ FUNCIÓN MEJORADA: Verifica sesión y redirige
   function verificarSesion() {
     const sesion = localStorage.getItem('jarvaz_sesion');
     if (sesion) {
@@ -635,7 +633,7 @@
         const tipo = (user.tipo || user.categoria || '').toLowerCase();
         let destino = 'inicio_de_sesion_general.html';
         if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
-        window.location.replace(destino); // ✅ Siempre replace para no agregar al historial
+        window.location.replace(destino);
       } catch (e) {
         localStorage.removeItem('jarvaz_sesion');
       }
@@ -832,7 +830,7 @@
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
         showAlert('✅ ¡Cuenta segura creada! Tus datos están protegidos con Google. Redirigiendo...', 'success');
-        setTimeout(() => { window.location.replace("inicio_de_sesion_general.html"); }, 1800); // ✅ replace
+        setTimeout(() => { window.location.replace("inicio_de_sesion_general.html"); }, 1800);
       } else {
         showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
       }
@@ -872,7 +870,7 @@
           localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
           mostrarSesionActiva(user);
           showAlert('✅ ¡Bienvenido de vuelta, profesor ' + (user.nombres || '') + '!', 'success');
-          setTimeout(() => { window.location.replace("inicio_de_sesion_profesor.html"); }, 1200); // ✅ replace
+          setTimeout(() => { window.location.replace("inicio_de_sesion_profesor.html"); }, 1200);
         } else {
           window._profCodigo = codigo;
           showAlert('✨ Código válido. Completa tus datos.', 'info');
@@ -920,7 +918,7 @@
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
         showAlert('✅ ¡Cuenta de profesor activada!', 'success');
-        setTimeout(() => { window.location.replace("inicio_de_sesion_profesor.html"); }, 1500); // ✅ replace
+        setTimeout(() => { window.location.replace("inicio_de_sesion_profesor.html"); }, 1500);
       } else {
         showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
       }
@@ -967,7 +965,7 @@
         showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
         setTimeout(() => {
           const destino = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
-          window.location.replace(destino); // ✅ replace en lugar de href
+          window.location.replace(destino);
         }, 1200);
       } else {
         showAlert('❌ ' + (res.message || 'Credenciales incorrectas'), 'error');
@@ -991,7 +989,7 @@
         showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
         setTimeout(() => {
           const destino = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
-          window.location.replace(destino); // ✅ replace
+          window.location.replace(destino);
         }, 1000);
       } else {
         showAlert('❌ Ese Gmail no corresponde a esta cuenta. Usa: ' + user.email, 'error');
@@ -1000,27 +998,19 @@
     }
   };
 
-  // ✅ MANEJAR EL BOTÓN "ATRÁS" DEL CELULAR (popstate)
-  // Cuando el usuario presiona el botón atrás del navegador y llega a esta página
   window.addEventListener('popstate', function(event) {
-    verificarSesion(); // Verifica si hay sesión activa y redirige o muestra login
+    verificarSesion();
   });
 
-  // ✅ FORZAR RECARGA AL VOLVER DESDE CACHÉ (iOS/Safari)
-  // Cuando la página se restaura desde la caché del navegador (navegación atrás en iOS)
   window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
-      // La página fue restaurada desde la caché
       verificarSesion();
     }
   });
 
-  // ✅ INICIALIZACIÓN AL CARGAR LA PÁGINA
   window.addEventListener('DOMContentLoaded', () => { 
     verificarSesion(); 
     
-    // ✅ Crear entrada inicial en el historial para que el botón "atrás" funcione correctamente
-    // Esto asegura que cuando el usuario llegue aquí por primera vez, haya una entrada en el historial
     if (!window.history.state || !window.history.state.jarvaz_inicio) {
       window.history.replaceState({ jarvaz_inicio: true }, '', window.location.href);
     }
