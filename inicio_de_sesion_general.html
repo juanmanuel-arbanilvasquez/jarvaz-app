@@ -189,7 +189,7 @@
 
         /* ===== PERFIL MÓVIL ===== */
         .mobile-profile {
-            display: none; /* Oculto por defecto en escritorio */
+            display: none;
             background: var(--white);
             border-radius: var(--card-radius);
             padding: 1.5rem;
@@ -788,7 +788,6 @@
             justify-content: center;
         }
 
-        /* ===== BOTÓN CICLO PREMIUM ===== */
         .btn-premium {
             background: linear-gradient(135deg, var(--gold), var(--gold-light));
             color: var(--vino-900);
@@ -819,7 +818,6 @@
         .btn-premium .premium-title { font-size: 1.1rem; }
         .btn-premium .premium-sub { font-size: 0.75rem; opacity: 0.9; font-weight: 500; }
 
-        /* ===== CHISPAS DORADAS (ANIMACIÓN) ===== */
         .chispa-dorada {
             position: fixed;
             width: 6px;
@@ -843,7 +841,6 @@
             }
         }
 
-        /* ===== CAJA DE REDES SOCIALES ===== */
         .social-links-box {
             background: var(--light);
             border-radius: 12px;
@@ -1227,18 +1224,17 @@
             color: #cccccc;
         }
 
-        /* ===== SCROLL INDEPENDIENTE, INVISIBLE Y CON LÍMITE ESTRICTO ===== */
         @media (min-width: 1025px) {
             body {
                 height: 100vh;
-                overflow: hidden; /* Evita el scroll general de toda la página */
+                overflow: hidden;
             }
 
             .main-container {
-                height: calc(100vh - 80px); /* Altura total menos el header fijo */
+                height: calc(100vh - 80px);
                 margin-top: 80px;
                 margin-bottom: 0;
-                padding: 0 1rem 20px 1rem; /* Espacio inferior para que no se corte el contenido */
+                padding: 0 1rem 20px 1rem;
                 display: grid;
                 grid-template-columns: 280px 1fr 280px;
                 gap: 1.5rem;
@@ -1247,23 +1243,18 @@
 
             .sidebar, .feed {
                 height: 100%;
-                overflow-y: auto; /* Permite scroll independiente en cada columna */
-                overscroll-behavior-y: contain; /* ✅ EVITA EL REBOTE Y QUE SIGA SUBIENDO MÁS DE LA CUENTA */
-                
-                /* Ocultar barra de scroll en Firefox */
-                scrollbar-width: none; 
-                /* Ocultar barra de scroll en IE/Edge antiguo */
-                -ms-overflow-style: none; 
+                overflow-y: auto;
+                overscroll-behavior-y: contain;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
             }
 
-            /* Ocultar barra de scroll en Chrome, Safari y Edge moderno */
             .sidebar::-webkit-scrollbar, 
             .feed::-webkit-scrollbar {
-                display: none; 
+                display: none;
             }
         }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             .main-container {
                 grid-template-columns: 1fr;
@@ -1350,7 +1341,7 @@
             }
 
             .mobile-profile {
-                display: flex; /* ✅ Solo visible en móvil */
+                display: flex;
                 padding: 1.2rem;
                 margin: 0 0 1.5rem 0;
                 width: 100%;
@@ -1465,7 +1456,6 @@
     </style>
 </head>
 <body>
-    <!-- ===== HEADER PARA ESCRITORIO ===== -->
     <header class="desktop-header">
         <div class="nav-container">
             <div class="logo" onclick="goToFeed()">
@@ -1498,7 +1488,6 @@
         </div>
     </header>
 
-    <!-- ===== HEADER PARA MÓVIL ===== -->
     <header class="mobile-header">
         <div class="mobile-nav-top">
             <div class="mobile-logo">
@@ -1537,7 +1526,6 @@
         </div>
     </header>
 
-    <!-- ===== MENÚ LATERAL PARA MÓVIL ===== -->
     <div class="mobile-sidebar" id="mobileSidebar">
         <div class="sidebar-header">
             <h3 id="mobileUserName">Mi Perfil</h3>
@@ -1680,7 +1668,6 @@
             </div>
         </div>
 
-        <!-- NUEVA SECCIÓN MÓVIL: REDES Y MATRÍCULAS -->
         <div class="mobile-section" id="mobileSocials">
             <h2 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-share-alt"></i> Redes y Matrículas</h2>
             
@@ -1709,12 +1696,10 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- ===== BOTÓN FLOTANTE PARA COMPARTIR ===== -->
     <button class="floating-share-btn" onclick="openShareModal()" title="Invitar amigos a JARVAZ">
         <i class="fas fa-share-alt"></i>
     </button>
 
-    <!-- ===== MODAL PARA COMPARTIR ===== -->
     <div class="share-modal" id="shareModal">
         <div class="share-modal-content">
             <span class="close-modal" onclick="closeShareModal()">&times;</span>
@@ -1745,9 +1730,7 @@
         </div>
     </div>
 
-    <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <div class="main-container">
-        <!-- Sidebar Izquierda -->
         <aside class="sidebar desktop-only">
             <div class="user-profile">
                 <div class="post-input-container">
@@ -1830,7 +1813,6 @@
             </div>
         </aside>
 
-        <!-- Feed Principal -->
         <main class="feed" id="mainFeed">
             <div class="mobile-profile fade-in">
                 <div class="mobile-profile-avatar" id="mobileProfileAvatar">JM</div>
@@ -1848,9 +1830,7 @@
             </div>
         </main>
 
-        <!-- Sidebar Derecha -->
         <aside class="sidebar desktop-only">
-            <!-- ✅ BOTÓN CICLO PREMIUM CON EFECTO -->
             <a href="#" class="btn-premium" onclick="irAPremium(event)">
                 <i class="fas fa-crown"></i>
                 <span class="premium-title">Ciclo Premium JARVAZ</span>
@@ -1885,7 +1865,6 @@
                 </div>
             </div>
 
-            <!-- ✅ CAJA DE REDES SOCIALES -->
             <div class="social-links-box">
                 <h4><i class="fas fa-share-alt"></i> Síguenos en Redes</h4>
                 <div class="social-icons">
@@ -1908,12 +1887,10 @@
     </div>
 
     <script>
-        // URL del Apps Script
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
 
         let welcomeNotificationShown = false;
 
-        // ===== FUNCIÓN CLAVE: Normaliza las claves del usuario =====
         function normalizarUsuario(user) {
             if (!user) return {};
             return {
@@ -1934,7 +1911,6 @@
             };
         }
 
-        // ===== VERIFICACIÓN DE SESIÓN =====
         function checkSession() {
             try {
                 const sessionData = localStorage.getItem('jarvaz_sesion');
@@ -1959,7 +1935,6 @@
             }
         }
 
-        // ===== CARGA DE USUARIO =====
         function loadUserData() {
             const user = checkSession();
             if (!user) {
@@ -1996,7 +1971,6 @@
         }
 
         function updateUserProfile(nombreCompleto, titulo, initials, user) {
-            // ===== ESCRITORIO: Sidebar izquierda =====
             setText('userName', nombreCompleto);
             setText('userTitle', titulo);
             setText('userEmail', user.Email || 'No especificado');
@@ -2010,7 +1984,6 @@
                 setText('userGrado', user.Grado || 'No especificado');
             }
             
-            // ===== MÓVIL: Menú lateral =====
             setText('mobileUserName', nombreCompleto);
             setText('mobileFullName', nombreCompleto);
             setText('mobileUserTitle', titulo);
@@ -2024,18 +1997,15 @@
                 setText('mobileUserGrado', user.Grado || 'No especificado');
             }
             
-            // ===== MÓVIL: Perfil en el feed =====
             setText('mobileProfileName', nombreCompleto);
             setText('mobileProfileTitle', titulo);
             
-            // ===== AVATARES =====
             const avatares = document.querySelectorAll('.post-avatar, .avatar, #mobileUserAvatar, #mobileProfileAvatar');
             avatares.forEach(avatar => {
                 avatar.textContent = initials;
             });
         }
 
-        // ===== FUNCIONES AUXILIARES =====
         function setText(id, text) {
             const el = document.getElementById(id);
             if (el) el.textContent = text;
@@ -2046,19 +2016,15 @@
             if (el) el.style.display = 'flex';
         }
 
-        // ===== EFECTO CHISPAS DORADAS Y REDIRECCIÓN =====
         function irAPremium(event) {
-            event.preventDefault(); // Evita la navegación inmediata
+            event.preventDefault();
             
-            // Obtener coordenadas del clic o del centro del botón
             const rect = event.currentTarget.getBoundingClientRect();
             const x = rect.left + rect.width / 2;
             const y = rect.top + rect.height / 2;
             
-            // Generar chispas
             crearChispasDoradas(x, y);
             
-            // Redirigir después de que se vea la animación (600ms)
             setTimeout(() => {
                 window.location.href = 'ciclo_premium_jarvaz.html';
             }, 600);
@@ -2070,7 +2036,6 @@
                 const chispa = document.createElement('div');
                 chispa.classList.add('chispa-dorada');
                 
-                // Dirección y distancia aleatoria
                 const angle = Math.random() * Math.PI * 2;
                 const velocity = 50 + Math.random() * 100;
                 const tx = Math.cos(angle) * velocity;
@@ -2083,14 +2048,12 @@
                 
                 document.body.appendChild(chispa);
                 
-                // Eliminar del DOM después de la animación
                 setTimeout(() => {
                     chispa.remove();
                 }, 600);
             }
         }
 
-        // ===== SISTEMA DE NAVEGACIÓN MÓVIL =====
         const hamburgerMenu = document.getElementById('hamburgerMenu');
         const closeSidebar = document.getElementById('closeSidebar');
         const mobileSidebar = document.getElementById('mobileSidebar');
@@ -2132,7 +2095,6 @@
             }
         }
 
-        // ===== SISTEMA DE COMPARTIR =====
         function openShareModal() {
             const modal = document.getElementById('shareModal');
             if (modal) {
@@ -2215,22 +2177,23 @@
             showNotification('Perfil en construcción', 'info');
         }
 
+        // ✅ FUNCIÓN CORREGIDA: Usa replace() y limpia ambas sesiones
         function logout() {
             if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
                 localStorage.removeItem('jarvaz_sesion');
+                localStorage.removeItem('jarvaz_premium_sesion'); // ✅ NUEVO: Limpiar sesión premium
                 showNotification('Sesión cerrada correctamente', 'info');
                 setTimeout(() => {
-                    window.location.href = 'inicio.html';
+                    window.location.replace('inicio.html'); // ✅ CAMBIO CRÍTICO: replace en lugar de href
                 }, 1500);
             }
         }
 
         function goToFeed(e) {
             if (e) e.preventDefault();
-            window.location.href = 'inicio_de_sesion_general.html';
+            window.location.replace('inicio_de_sesion_general.html'); // ✅ Usar replace aquí también
         }
 
-        // ===== SISTEMA DE 3 MODOS DE TEMA =====
         let currentMode = 'normal';
 
         function toggleThemeMode() {
@@ -2293,12 +2256,41 @@
             }, 3000);
         }
 
-        // ===== INICIALIZACIÓN =====
+        // ✅ NUEVO: Manejar el botón "atrás" del celular
+        window.addEventListener('popstate', function(event) {
+            const sesion = localStorage.getItem('jarvaz_sesion');
+            if (!sesion) {
+                // Si no hay sesión, redirigir a inicio.html
+                window.location.replace('inicio.html');
+            } else {
+                // Si hay sesión, recargar la página
+                window.location.reload();
+            }
+        });
+
+        // ✅ NUEVO: Manejar restauración desde caché (iOS/Safari)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // La página fue restaurada desde la caché
+                const sesion = localStorage.getItem('jarvaz_sesion');
+                if (!sesion) {
+                    window.location.replace('inicio.html');
+                } else {
+                    window.location.reload();
+                }
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
             
             const savedTheme = localStorage.getItem('jarvazTheme') || 'normal';
             setThemeMode(savedTheme);
+            
+            // ✅ NUEVO: Crear entrada inicial en el historial
+            if (!window.history.state || !window.history.state.jarvaz_dashboard) {
+                window.history.replaceState({ jarvaz_dashboard: true }, '', window.location.href);
+            }
         });
     </script>
 </body>
