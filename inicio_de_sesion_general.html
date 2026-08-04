@@ -1737,7 +1737,7 @@
             </div>
 
             <div class="link-copy">
-                <input type="text" id="appLink" value="https://juanarbanilneo.github.io/jarvaz-app/" readonly>
+                <input type="text" id="appLink" value="https://juanmanuel-arbanilvasquez.github.io/jarvaz-app/" readonly>
                 <button class="copy-btn" onclick="copyLink()">
                     <i class="fas fa-copy"></i> Copiar Enlace
                 </button>
@@ -2166,7 +2166,7 @@
             const shareData = {
                 title: 'JARVAZ - Academia Preuniversitaria',
                 text: '¡Únete a JARVAZ! La mejor plataforma para estudiantes que quieren ingresar a la universidad.',
-                url: 'https://juanarbanilneo.github.io/jarvaz-app/'
+                url: 'https://juanmanuel-arbanilvasquez.github.io/jarvaz-app/'
             };
 
             if (navigator.share) {
@@ -2180,20 +2180,20 @@
         }
 
         function shareWhatsApp() {
-            const text = encodeURIComponent('¡Únete a JARVAZ! La mejor academia preuniversitaria. 🎓\nhttps://juanarbanilneo.github.io/jarvaz-app/');
+            const text = encodeURIComponent('¡Únete a JARVAZ! La mejor academia preuniversitaria. 🎓\nhttps://juanmanuel-arbanilvasquez.github.io/jarvaz-app/');
             window.open(`https://wa.me/?text=${text}`, '_blank');
             showNotification('Compartiendo en WhatsApp...', 'info');
         }
 
         function shareFacebook() {
-            const url = encodeURIComponent('https://juanarbanilneo.github.io/jarvaz-app/');
+            const url = encodeURIComponent('https://juanmanuel-arbanilvasquez.github.io/jarvaz-app/');
             window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
             showNotification('Compartiendo en Facebook...', 'info');
         }
 
         function shareTelegram() {
             const text = encodeURIComponent('¡Únete a JARVAZ! La mejor academia preuniversitaria 🎓');
-            const url = encodeURIComponent('https://juanarbanilneo.github.io/jarvaz-app/');
+            const url = encodeURIComponent('https://juanmanuel-arbanilvasquez.github.io/jarvaz-app/');
             window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
             showNotification('Compartiendo en Telegram...', 'info');
         }
