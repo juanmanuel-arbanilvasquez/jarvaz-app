@@ -224,7 +224,7 @@
             padding: 0.9rem 1rem 0.9rem 2.5rem;
             border: 2px solid var(--border-color);
             border-radius: 10px;
-            font-size: 16px; /* Evita zoom automático en iOS */
+            font-size: 16px;
             transition: all 0.3s;
             font-family: 'Inter', sans-serif;
             -webkit-appearance: none;
@@ -318,7 +318,6 @@
             width: 100%;
         }
 
-        /* ✅ OVERLAY MÓVIL - NUEVO */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -338,7 +337,6 @@
             opacity: 1;
         }
 
-        /* Sidebar Mejorado */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--bg-white);
@@ -504,7 +502,6 @@
             opacity: 1;
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
@@ -1054,7 +1051,6 @@
             transform: scale(0.9);
         }
 
-        /* ✅ RESPONSIVE CORREGIDO PARA MÓVIL */
         @media (max-width: 1024px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -1221,7 +1217,6 @@
             40% { transform: scale(1); }
         }
 
-        /* Prevenir scroll bounce en iOS */
         body.sidebar-open {
             overflow: hidden;
         }
@@ -1271,11 +1266,9 @@
 
     <!-- ===== VISTA DASHBOARD ===== -->
     <div id="dashboardView">
-        <!-- ✅ NUEVO: Overlay para cerrar el menú al tocar fuera -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
         
         <div class="dashboard-layout">
-            <!-- Sidebar -->
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <div class="sidebar-logo">JARVAZ</div>
@@ -1302,7 +1295,6 @@
                 </nav>
             </aside>
 
-            <!-- Main Content -->
             <main class="main-content">
                 <header class="top-header">
                     <button class="menu-toggle" id="menuToggleBtn" aria-label="Abrir menú">
@@ -1326,7 +1318,6 @@
                 </header>
 
                 <div class="content-wrapper">
-                    <!-- SECCIÓN INICIO -->
                     <div id="section-inicio" class="section active">
                         <div class="welcome-banner">
                             <h1>Bienvenido, <span id="userNameDisplay">Estudiante JARVAZ</span></h1>
@@ -1427,7 +1418,6 @@
                         </div>
                     </div>
 
-                    <!-- SECCIÓN CURSOS -->
                     <div id="section-cursos" class="section">
                         <div class="section-header">
                             <h2 class="section-title">
@@ -1459,7 +1449,6 @@
                         </div>
                     </div>
 
-                    <!-- SECCIÓN RENDIMIENTO -->
                     <div id="section-rendimiento" class="section">
                         <div class="section-header">
                             <h2 class="section-title">
@@ -1505,20 +1494,60 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
 
-        // Elementos globales del DOM
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const menuToggleBtn = document.getElementById('menuToggleBtn');
         const dashboardView = document.getElementById('dashboardView');
 
-        // ✅ INICIALIZACIÓN
+        // ✅ INICIALIZACIÓN BLINDADA (SEGURIDAD)
         window.addEventListener('DOMContentLoaded', () => {
-            const sesion = localStorage.getItem('jarvaz_premium_sesion');
-            if (sesion) {
+            // PASO 1: Obtener la sesión principal actual (JARVAZ)
+            let sesionPrincipal = null;
+            try {
+                const sp = localStorage.getItem('jarvaz_sesion');
+                if (sp) sesionPrincipal = JSON.parse(sp);
+            } catch(e) {
+                console.error('Error leyendo sesión principal:', e);
+            }
+
+            // PASO 2: Si NO hay sesión principal, redirigir al login de JARVAZ
+            if (!sesionPrincipal || (!sesionPrincipal.nombres && !sesionPrincipal.Nombres)) {
+                showAlert('Debes iniciar sesión en JARVAZ primero.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'inicio_de_sesion_general.html';
+                }, 1500);
+                return;
+            }
+
+            // PASO 3: Obtener ID y email de la sesión principal actual
+            const idPrincipalActual = String(sesionPrincipal.id || sesionPrincipal.ID || '').trim();
+            const emailPrincipalActual = String(sesionPrincipal.email || sesionPrincipal.Email || '').toLowerCase().trim();
+
+            // PASO 4: Verificar sesión premium guardada
+            const sesionPremium = localStorage.getItem('jarvaz_premium_sesion');
+            if (sesionPremium) {
                 try {
-                    const user = JSON.parse(sesion);
-                    mostrarDashboard(user);
+                    const userPremium = JSON.parse(sesionPremium);
+                    
+                    // PASO 5: VALIDACIÓN CRÍTICA - ¿La sesión premium pertenece al usuario actual?
+                    const idPremiumGuardado = String(userPremium.ID || userPremium.id || '').trim();
+                    const emailPremiumGuardado = String(userPremium.Email || userPremium.email || '').toLowerCase().trim();
+                    
+                    const coincideID = idPrincipalActual && idPremiumGuardado && idPrincipalActual === idPremiumGuardado;
+                    const coincideEmail = emailPrincipalActual && emailPremiumGuardado && emailPrincipalActual === emailPremiumGuardado;
+                    
+                    if (coincideID || coincideEmail) {
+                        // ✅ Mismo usuario → mostrar su dashboard premium
+                        console.log('✅ Sesión premium válida para este usuario');
+                        mostrarDashboard(userPremium);
+                    } else {
+                        // ❌ DIFERENTE USUARIO → borrar y pedir credenciales nuevas
+                        console.warn('⚠️ Sesión premium pertenece a OTRO usuario. Limpiando...');
+                        localStorage.removeItem('jarvaz_premium_sesion');
+                        showAlert('Por seguridad, ingresa tu ID y Clave de Acceso.', 'info');
+                    }
                 } catch(e) {
+                    console.error('Error en sesión premium:', e);
                     localStorage.removeItem('jarvaz_premium_sesion');
                 }
             }
@@ -1526,9 +1555,7 @@
             setupEventListeners();
         });
 
-        // ✅ Configurar todos los event listeners una sola vez
         function setupEventListeners() {
-            // Menú hamburguesa
             if (menuToggleBtn) {
                 menuToggleBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1536,14 +1563,12 @@
                 });
             }
 
-            // Overlay: cierra el menú al tocar fuera
             if (sidebarOverlay) {
                 sidebarOverlay.addEventListener('click', function() {
                     closeSidebarMobile();
                 });
             }
 
-            // Items del menú
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -1560,7 +1585,6 @@
                 });
             });
 
-            // Header del sidebar (colapsar solo en escritorio)
             const sidebarHeader = document.querySelector('.sidebar-header');
             if (sidebarHeader) {
                 sidebarHeader.addEventListener('click', function() {
@@ -1570,24 +1594,20 @@
                 });
             }
 
-            // Botón de pantalla completa
             const fullscreenBtn = document.getElementById('fullscreenBtn');
             if (fullscreenBtn) {
                 fullscreenBtn.addEventListener('click', toggleFullscreen);
             }
 
-            // Actualizar icono de pantalla completa
             document.addEventListener('fullscreenchange', updateFullscreenIcon);
             document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
 
-            // Cerrar sidebar al cambiar tamaño de ventana
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 1024) {
                     closeSidebarMobile();
                 }
             });
 
-            // Prevenir zoom en doble tap en iOS
             let lastTouchEnd = 0;
             document.addEventListener('touchend', function(e) {
                 const now = (new Date()).getTime();
@@ -1709,7 +1729,6 @@
                 document.getElementById('userDataGrado').textContent = grado;
             }
             
-            // Scroll al inicio al cargar el dashboard
             window.scrollTo(0, 0);
             
             animateStats();
@@ -1727,10 +1746,8 @@
             }, 300);
         }
 
-        // ✅ FUNCIONES DE SIDEBAR CORREGIDAS
         function toggleSidebar() {
             if (window.innerWidth <= 1024) {
-                // Modo móvil: alternar abrir/cerrar
                 const isOpen = sidebar.classList.contains('active');
                 if (isOpen) {
                     closeSidebarMobile();
@@ -1738,7 +1755,6 @@
                     openSidebarMobile();
                 }
             } else {
-                // Modo escritorio: colapsar
                 toggleSidebarCollapse();
             }
         }
@@ -1761,34 +1777,28 @@
         }
 
         function showSection(sectionName) {
-            // Ocultar todas las secciones
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
             
-            // Quitar active de todos los items
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.classList.remove('active');
             });
             
-            // Activar la sección seleccionada
             const targetSection = document.getElementById('section-' + sectionName);
             if (targetSection) {
                 targetSection.classList.add('active');
             }
             
-            // Activar el item del menú
             const menuItem = document.querySelector(`.menu-item[data-section="${sectionName}"]`);
             if (menuItem) {
                 menuItem.classList.add('active');
             }
             
-            // Cerrar el sidebar en móvil y hacer scroll al inicio
             if (window.innerWidth <= 1024) {
                 closeSidebarMobile();
             }
             
-            // Scroll suave al inicio del contenido
             setTimeout(() => {
                 const contentWrapper = document.querySelector('.content-wrapper');
                 if (contentWrapper) {
@@ -1830,7 +1840,8 @@
         function cerrarSesionPremium() {
             if (confirm('¿Deseas salir del Ciclo Premium?')) {
                 localStorage.removeItem('jarvaz_premium_sesion');
-                window.location.href = 'inicio_de_sesion_general.html';
+                localStorage.removeItem('jarvaz_sesion');
+                window.location.href = 'inicio.html';
             }
         }
     </script>
