@@ -39,7 +39,6 @@
             transition: all 0.3s ease;
         }
 
-        /* ===== HEADER PARA ESCRITORIO ===== */
         .desktop-header {
             background: var(--bg-gradient);
             color: var(--white);
@@ -117,7 +116,6 @@
             transform: scale(1.1);
         }
 
-        /* ===== HEADER PARA MÓVIL ===== */
         .mobile-header {
             display: none;
             background: var(--bg-gradient);
@@ -187,7 +185,6 @@
             font-size: 1.2rem;
         }
 
-        /* ===== PERFIL MÓVIL ===== */
         .mobile-profile {
             display: none;
             background: var(--white);
@@ -253,7 +250,6 @@
             word-wrap: break-word;
         }
 
-        /* ===== INFORMACIÓN PERSONAL ===== */
         .user-info-section {
             background: var(--light);
             padding: 1rem;
@@ -296,7 +292,6 @@
             font-size: 0.75rem;
         }
 
-        /* ===== CONTENIDO PRINCIPAL ===== */
         .main-container {
             max-width: 1200px;
             margin: 80px auto 20px;
@@ -1935,10 +1930,12 @@
             }
         }
 
+        // ✅ FUNCIÓN CORREGIDA: Redirige a inicio.html si no hay sesión
         function loadUserData() {
             const user = checkSession();
             if (!user) {
-                console.log('No hay sesión válida, mostrando datos por defecto');
+                console.log('⚠️ No hay sesión válida, redirigiendo a inicio.html');
+                window.location.replace('inicio.html'); // ✅ REDIRIGIR AUTOMÁTICAMENTE
                 return;
             }
 
@@ -2177,21 +2174,20 @@
             showNotification('Perfil en construcción', 'info');
         }
 
-        // ✅ FUNCIÓN CORREGIDA: Usa replace() y limpia ambas sesiones
         function logout() {
             if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
                 localStorage.removeItem('jarvaz_sesion');
-                localStorage.removeItem('jarvaz_premium_sesion'); // ✅ NUEVO: Limpiar sesión premium
+                localStorage.removeItem('jarvaz_premium_sesion');
                 showNotification('Sesión cerrada correctamente', 'info');
                 setTimeout(() => {
-                    window.location.replace('inicio.html'); // ✅ CAMBIO CRÍTICO: replace en lugar de href
+                    window.location.replace('inicio.html');
                 }, 1500);
             }
         }
 
         function goToFeed(e) {
             if (e) e.preventDefault();
-            window.location.replace('inicio_de_sesion_general.html'); // ✅ Usar replace aquí también
+            window.location.replace('inicio_de_sesion_general.html');
         }
 
         let currentMode = 'normal';
@@ -2256,22 +2252,18 @@
             }, 3000);
         }
 
-        // ✅ NUEVO: Manejar el botón "atrás" del celular
+        // ✅ VERIFICACIÓN DE SESIÓN AL CARGAR
         window.addEventListener('popstate', function(event) {
             const sesion = localStorage.getItem('jarvaz_sesion');
             if (!sesion) {
-                // Si no hay sesión, redirigir a inicio.html
                 window.location.replace('inicio.html');
             } else {
-                // Si hay sesión, recargar la página
                 window.location.reload();
             }
         });
 
-        // ✅ NUEVO: Manejar restauración desde caché (iOS/Safari)
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
-                // La página fue restaurada desde la caché
                 const sesion = localStorage.getItem('jarvaz_sesion');
                 if (!sesion) {
                     window.location.replace('inicio.html');
@@ -2287,7 +2279,6 @@
             const savedTheme = localStorage.getItem('jarvazTheme') || 'normal';
             setThemeMode(savedTheme);
             
-            // ✅ NUEVO: Crear entrada inicial en el historial
             if (!window.history.state || !window.history.state.jarvaz_dashboard) {
                 window.history.replaceState({ jarvaz_dashboard: true }, '', window.location.href);
             }
