@@ -500,23 +500,38 @@
   let googleUserActual = null;
   let formularioActivo = null;
 
-  // ✅ SOLUCIÓN BOTÓN ATRÁS: Función para bloquear la navegación hacia atrás después de cerrar sesión
+  // ✅ SOLUCIÓN DEFINITIVA: Sistema de bloqueo de botón Atrás + Validación de sesión en tiempo real
   function bloquearBotonAtras() {
-    // Verificar si no hay sesión activa (usuario cerró sesión o es primera vez)
     const sesion = localStorage.getItem('jarvaz_sesion');
     
     if (!sesion || (sesion && JSON.parse(sesion).isGuest)) {
-      // Crear un estado en el historial para interceptar el botón Atrás
-      history.pushState({ page: 'inicio' }, '', window.location.href);
+      // Crear múltiples estados en el historial para mayor robustez
+      history.pushState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
+      history.pushState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
       
-      // Interceptar el evento popstate (cuando el usuario presiona Atrás)
+      // Interceptar el evento popstate de forma más agresiva
       window.addEventListener('popstate', function(event) {
-        // Si el estado es de inicio o no hay estado, forzar a permanecer en inicio
-        if (!event.state || (event.state && event.state.page === 'inicio')) {
-          history.go(1); // Volver hacia adelante para mantenerse en inicio
-        }
+        // Siempre forzar a permanecer en inicio
+        setTimeout(() => {
+          history.go(1); // Volver hacia adelante
+        }, 0);
       });
     }
+  }
+
+  // ✅ VALIDACIÓN DE SESIÓN EN TIEMPO REAL (Cuando la app vuelve a estar visible)
+  function validarSesionAlVolver() {
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        // La app volvió a estar visible, verificar si hay sesión
+        const sesion = localStorage.getItem('jarvaz_sesion');
+        if (!sesion) {
+          // No hay sesión, limpiar el historial y forzar recarga
+          window.history.replaceState(null, '', window.location.href);
+          location.reload();
+        }
+      }
+    });
   }
 
   function handleGoogleCredential(response) {
@@ -677,11 +692,15 @@
     badge.classList.add('active');
   }
 
-  // ✅ SOLUCIÓN BOTÓN ATRÁS: Función mejorada para cerrar sesión
+  // ✅ FUNCIÓN MEJORADA DE CERRAR SESIÓN: Limpia historial completamente
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
       localStorage.removeItem('jarvaz_sesion');
-      // Usar replace() en lugar de href para limpiar el historial
+      // Guardar timestamp de cierre de sesión para que otras páginas lo detecten
+      localStorage.setItem('jarvaz_sesion_cerrada', Date.now().toString());
+      
+      // Limpiar completamente el historial y redirigir
+      window.history.replaceState(null, '', window.location.href);
       window.location.replace('inicio.html');
     }
   }
@@ -1040,8 +1059,8 @@
 
   window.addEventListener('DOMContentLoaded', () => { 
     verificarSesion();
-    // ✅ SOLUCIÓN BOTÓN ATRÁS: Activar el bloqueo al cargar la página
     bloquearBotonAtras();
+    validarSesionAlVolver(); // ✅ Activar validación cuando la app vuelve a estar visible
     
     const loginInput = document.getElementById('login_contacto');
     if (loginInput) {
