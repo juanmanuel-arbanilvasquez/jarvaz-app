@@ -1,6 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - Debe ir PRIMERO, antes de cualquier cosa -->
+    <script>
+    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html */
+    (function () {
+      function sesionPrincipalInvalida() {
+        try {
+          var s = localStorage.getItem('jarvaz_sesion');
+          if (!s) return true;
+          var u = JSON.parse(s);
+          if (!u) return true;
+          if (u.isGuest) return true;
+          return !u.id && !u.nombres && !u.Nombres;
+        } catch (e) { return true; }
+      }
+      
+      function volverInicio() {
+        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+        window.location.replace('inicio.html');
+      }
+      
+      // 1) Carga normal: verifica ANTES de renderizar
+      if (sesionPrincipalInvalida()) volverInicio();
+      
+      // 2) Botón atrás "<" o reabrir app (restauración desde caché del navegador)
+      window.addEventListener('pageshow', function () { 
+        if (sesionPrincipalInvalida()) volverInicio(); 
+      });
+      
+      // 3) Volver del botón home "◯" (app en segundo plano)
+      document.addEventListener('visibilitychange', function () { 
+        if (!document.hidden && sesionPrincipalInvalida()) volverInicio(); 
+      });
+      
+      // 4) Sincronización entre pestañas: si cierran sesión en otra pestaña
+      window.addEventListener('storage', function (e) { 
+        if (e.key === 'jarvaz_sesion' && !e.newValue) volverInicio(); 
+      });
+    })();
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#A52238">
@@ -1225,7 +1265,8 @@
 <body>
     <!-- ===== VISTA DE LOGIN ===== -->
     <div id="loginView">
-        <button class="back-btn" onclick="window.location.href='inicio_de_sesion_general.html'">
+        <!-- ✅ CORREGIDO: Ahora usa replace() para no dejar rastro en historial -->
+        <button class="back-btn" onclick="volverAlInicioGeneral()">
             <i class="fas fa-arrow-left"></i> Volver al Inicio
         </button>
 
@@ -1306,7 +1347,8 @@
                         <button class="icon-btn" id="fullscreenBtn" title="Ampliar pantalla">
                             <i class="fas fa-expand"></i>
                         </button>
-                        <button class="icon-btn" onclick="window.location.href='inicio_de_sesion_general.html'" title="Volver al inicio">
+                        <!-- ✅ CORREGIDO: Ahora usa función con replace() -->
+                        <button class="icon-btn" onclick="volverAlInicioGeneral()" title="Volver al inicio">
                             <i class="fas fa-house-user"></i>
                         </button>
 
@@ -1499,6 +1541,11 @@
         const menuToggleBtn = document.getElementById('menuToggleBtn');
         const dashboardView = document.getElementById('dashboardView');
 
+        // ✅ NUEVA FUNCIÓN: Volver al inicio general usando replace() para no dejar rastro
+        function volverAlInicioGeneral() {
+            window.location.replace('inicio_de_sesion_general.html');
+        }
+
         // ✅ INICIALIZACIÓN BLINDADA (SEGURIDAD)
         window.addEventListener('DOMContentLoaded', () => {
             // PASO 1: Obtener la sesión principal actual (JARVAZ)
@@ -1510,11 +1557,11 @@
                 console.error('Error leyendo sesión principal:', e);
             }
 
-            // PASO 2: Si NO hay sesión principal, redirigir al login de JARVAZ
+            // PASO 2: Si NO hay sesión principal, redirigir al login de JARVAZ usando replace()
             if (!sesionPrincipal || (!sesionPrincipal.nombres && !sesionPrincipal.Nombres)) {
                 showAlert('Debes iniciar sesión en JARVAZ primero.', 'error');
                 setTimeout(() => {
-                    window.location.href = 'inicio_de_sesion_general.html';
+                    window.location.replace('inicio_de_sesion_general.html');  // ✅ Corregido
                 }, 1500);
                 return;
             }
@@ -1837,11 +1884,15 @@
             }
         }
 
+        // ✅ CIERRE DE SESIÓN PREMIUM CORREGIDO:
+        // - Solo borra jarvaz_premium_sesion (NO la sesión principal)
+        // - Usa replace() para no dejar rastro en historial
+        // - Redirige al login de JARVAZ (no a inicio.html)
         function cerrarSesionPremium() {
             if (confirm('¿Deseas salir del Ciclo Premium?')) {
                 localStorage.removeItem('jarvaz_premium_sesion');
-                localStorage.removeItem('jarvaz_sesion');
-                window.location.href = 'inicio.html';
+                // NO borramos jarvaz_sesion - la sesión principal sigue activa
+                window.location.replace('inicio_de_sesion_general.html');  // ✅ Corregido
             }
         }
     </script>
