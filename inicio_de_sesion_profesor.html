@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - Debe ir PRIMERO, antes de cualquier cosa -->
+    <script>
+    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - inicio_de_sesion_profesor.html */
+    (function () {
+      function sesionInvalida() {
+        try {
+          var s = localStorage.getItem('jarvaz_sesion');
+          if (!s) return true;
+          var u = JSON.parse(s);
+          if (!u) return true;
+          if (u.isGuest) return false;        // permite Modo Invitado
+          // Verificar que sea profesor válido
+          var tipo = String(u.tipo || u.categoria || '').toLowerCase();
+          if (tipo !== 'profesor') return true;
+          return !u.id || !u.tipo;            // sesión corrupta
+        } catch (e) { return true; }
+      }
+      function volverInicio() {
+        // Oculta la pantalla ANTES de que se pinte (cero parpadeo)
+        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+        // replace() = no deja rastro en el historial
+        window.location.replace('inicio.html');
+      }
+      // 1) Carga normal: verifica ANTES de renderizar
+      if (sesionInvalida()) volverInicio();
+      // 2) Botón atrás "<" o reabrir app (restauración desde caché del navegador)
+      window.addEventListener('pageshow', function () { if (sesionInvalida()) volverInicio(); });
+      // 3) Volver del botón home "◯" (app en segundo plano)
+      document.addEventListener('visibilitychange', function () { if (!document.hidden && sesionInvalida()) volverInicio(); });
+      // 4) Sincronización entre pestañas: si cierran sesión en otra pestaña
+      window.addEventListener('storage', function (e) { if (e.key === 'jarvaz_sesion' && !e.newValue) volverInicio(); });
+    })();
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JARVAZ - Panel del Profesor</title>
