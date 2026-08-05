@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - Debe ir PRIMERO, antes de cualquier cosa -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html -->
     <script>
-    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html */
     (function () {
-      // Oculta la pantalla ANTES de que se pinte (evita flash de contenido)
       try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
       
       function sesionPrincipalInvalida() {
@@ -14,37 +12,64 @@
           if (!s) return true;
           var u = JSON.parse(s);
           if (!u) return true;
-          if (u.isGuest) return true;         // Invitado no puede entrar al Premium
-          return !u.id && !u.nombres && !u.Nombres; // sesión corrupta
+          if (u.isGuest) return true;
+          return !u.id && !u.nombres && !u.Nombres;
         } catch (e) { return true; }
       }
       
-      function volverInicio() {
-        // replace() = no deja rastro en el historial
-        window.location.replace('inicio.html');
+      function sesionPremiumValidaParaUsuarioActual() {
+        try {
+          var sp = localStorage.getItem('jarvaz_sesion');
+          var sPrem = localStorage.getItem('jarvaz_premium_sesion');
+          if (!sp || !sPrem) return false;
+          var u = JSON.parse(sp);
+          var p = JSON.parse(sPrem);
+          var idU = String(u.id || u.ID || '').trim();
+          var emailU = String(u.email || u.Email || '').toLowerCase().trim();
+          var idP = String(p.ID || p.id || '').trim();
+          var emailP = String(p.Email || p.email || '').toLowerCase().trim();
+          return (idU && idP && idU === idP) || (emailU && emailP && emailU === emailP);
+        } catch (e) { return false; }
       }
       
-      // 1) Carga normal: verifica ANTES de renderizar
-      if (sesionPrincipalInvalida()) volverInicio();
-      else {
-        // Sesión válida: muestra la página
-        try { document.documentElement.style.visibility = 'visible'; } catch (e) {}
+      function redirigir(destino) {
+        window.location.replace(destino);
       }
       
-      // 2) Botón atrás "<" o reabrir app (restauración desde caché del navegador)
+      // 1) Si no hay sesión principal → ir al login general
+      if (sesionPrincipalInvalida()) {
+        redirigir('inicio.html');
+        return;
+      }
+      
+      // 2) Si NO hay sesión premium válida → ir a la pantalla de claves
+      if (!sesionPremiumValidaParaUsuarioActual()) {
+        redirigir('clave_ciclo_premium_jarvaz.html');
+        return;
+      }
+      
+      // 3) Todo válido: mostrar dashboard
+      try { document.documentElement.style.visibility = 'visible'; } catch (e) {}
+      
+      // 4) Restauración desde caché (botón ◯ o <)
       window.addEventListener('pageshow', function () {
-        if (sesionPrincipalInvalida()) volverInicio();
+        if (sesionPrincipalInvalida()) redirigir('inicio.html');
+        else if (!sesionPremiumValidaParaUsuarioActual()) redirigir('clave_ciclo_premium_jarvaz.html');
         else { try { document.documentElement.style.visibility = 'visible'; } catch (e) {} }
       });
       
-      // 3) Volver del botón home "◯" (app en segundo plano)
+      // 5) Volver del botón ◯
       document.addEventListener('visibilitychange', function () {
-        if (!document.hidden && sesionPrincipalInvalida()) volverInicio();
+        if (!document.hidden) {
+          if (sesionPrincipalInvalida()) redirigir('inicio.html');
+          else if (!sesionPremiumValidaParaUsuarioActual()) redirigir('clave_ciclo_premium_jarvaz.html');
+        }
       });
       
-      // 4) Sincronización entre pestañas: si cierran sesión en otra pestaña
+      // 6) Sincronización entre pestañas
       window.addEventListener('storage', function (e) {
-        if (e.key === 'jarvaz_sesion' && !e.newValue) volverInicio();
+        if (e.key === 'jarvaz_sesion' && !e.newValue) redirigir('inicio.html');
+        if (e.key === 'jarvaz_premium_sesion' && !e.newValue) redirigir('clave_ciclo_premium_jarvaz.html');
       });
     })();
     </script>
@@ -90,279 +115,15 @@
             background: var(--bg-light);
             color: var(--text-dark);
             min-height: 100vh;
-            min-height: -webkit-fill-available;
             position: relative;
             touch-action: manipulation;
             -webkit-font-smoothing: antialiased;
             overscroll-behavior-y: contain;
         }
 
-        /* ===== VISTA DE LOGIN MEJORADA ===== */
-        #loginView {
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--primary-wine) 0%, var(--dark-wine) 100%);
-            padding: 20px;
-            padding-top: calc(env(safe-area-inset-top) + 20px);
-            padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
-            position: relative;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        #loginView::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(212,175,55,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: moveGrid 20s linear infinite;
-            top: -50%;
-            left: -50%;
-        }
-
-        @keyframes moveGrid {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 24px;
-            padding: 2.5rem 2rem;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3), 0 0 100px rgba(212,175,55,0.2);
-            position: relative;
-            z-index: 1;
-            animation: slideUp 0.6s ease-out;
-            border: 1px solid rgba(212,175,55,0.3);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .login-header::after {
-            content: '';
-            position: absolute;
-            bottom: -1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 4px;
-            background: linear-gradient(90deg, var(--gold), var(--gold-light));
-            border-radius: 2px;
-        }
-
-        .login-logo {
-            font-family: 'Poppins', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-wine), var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: calc(env(safe-area-inset-top) + 20px);
-            left: 20px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-            backdrop-filter: blur(10px);
-            z-index: 2;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .back-btn:hover, .back-btn:active {
-            background: rgba(255,255,255,0.3);
-            transform: translateX(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn-whatsapp {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-whatsapp:active {
-            transform: scale(0.98);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-        }
-
-        .divider span { padding: 0 1rem; }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-            position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.5rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.9rem 1rem 0.9rem 2.5rem;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-            -webkit-appearance: none;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
-        }
-
-        .form-group i {
-            position: absolute;
-            left: 1rem;
-            top: 2.4rem;
-            color: var(--gold);
-            font-size: 0.9rem;
-            pointer-events: none;
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--primary-wine), var(--dark-wine));
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 0.5rem;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(165, 34, 56, 0.3);
-        }
-
-        .btn-submit:active {
-            transform: scale(0.98);
-        }
-
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            display: none;
-            text-align: center;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .alert-error {
-            background: linear-gradient(135deg, #fee2e2, #fecaca);
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-            color: #059669;
-            border: 1px solid #a7f3d0;
-        }
-
-        /* ===== VISTA DASHBOARD MEJORADA ===== */
-        #dashboardView {
-            display: none;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
-            width: 100%;
-            position: relative;
-        }
-
-        #dashboardView.visible {
-            display: block;
-        }
-
         .dashboard-layout {
             display: flex;
             min-height: 100vh;
-            min-height: -webkit-fill-available;
             width: 100%;
         }
 
@@ -393,7 +154,6 @@
             top: 0;
             left: 0;
             height: 100vh;
-            height: -webkit-fill-available;
             overflow-y: auto;
             overflow-x: hidden;
             z-index: 1000;
@@ -402,9 +162,7 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); }
 
         .sidebar-header {
             padding: 1.5rem;
@@ -421,9 +179,7 @@
             justify-content: center;
         }
 
-        .sidebar-header:active {
-            transform: scale(0.98);
-        }
+        .sidebar-header:active { transform: scale(0.98); }
 
         .sidebar-logo {
             font-family: 'Poppins', sans-serif;
@@ -437,10 +193,7 @@
             z-index: 1;
         }
 
-        .sidebar.collapsed .sidebar-logo {
-            font-size: 0;
-            width: 0;
-        }
+        .sidebar.collapsed .sidebar-logo { font-size: 0; width: 0; }
 
         .sidebar-subtitle {
             font-size: 0.8rem;
@@ -452,10 +205,7 @@
             z-index: 1;
         }
 
-        .sidebar.collapsed .sidebar-subtitle {
-            opacity: 0;
-            width: 0;
-        }
+        .sidebar.collapsed .sidebar-subtitle { opacity: 0; width: 0; }
 
         .collapse-icon {
             position: absolute;
@@ -466,13 +216,9 @@
             z-index: 1;
         }
 
-        .sidebar.collapsed .collapse-icon {
-            transform: translateY(-50%) rotate(180deg);
-        }
+        .sidebar.collapsed .collapse-icon { transform: translateY(-50%) rotate(180deg); }
 
-        .sidebar-menu {
-            padding: 1rem 0;
-        }
+        .sidebar-menu { padding: 1rem 0; }
 
         .menu-item {
             padding: 0.9rem 1.5rem;
@@ -491,9 +237,7 @@
             user-select: none;
         }
 
-        .menu-item:active {
-            background: rgba(212,175,55,0.2);
-        }
+        .menu-item:active { background: rgba(212,175,55,0.2); }
 
         .menu-item:hover, .menu-item.active {
             background: rgba(212,175,55,0.1);
@@ -521,10 +265,7 @@
             font-weight: 500;
         }
 
-        .sidebar.collapsed .menu-item span {
-            opacity: 0;
-            width: 0;
-        }
+        .sidebar.collapsed .menu-item span { opacity: 0; width: 0; }
 
         .sidebar.collapsed .menu-item::after {
             content: attr(data-title);
@@ -546,16 +287,13 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
-        .sidebar.collapsed .menu-item:hover::after {
-            opacity: 1;
-        }
+        .sidebar.collapsed .menu-item:hover::after { opacity: 1; }
 
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
             background: var(--bg-light);
             min-height: 100vh;
-            min-height: -webkit-fill-available;
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             width: calc(100% - var(--sidebar-width));
             display: flex;
@@ -671,9 +409,7 @@
             max-width: 100%;
         }
 
-        .section.active {
-            display: block;
-        }
+        .section.active { display: block; }
 
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
@@ -772,9 +508,7 @@
             transition: transform 0.3s;
         }
 
-        .stat-card:hover::before {
-            transform: scaleX(1);
-        }
+        .stat-card:hover::before { transform: scaleX(1); }
 
         .stat-header {
             display: flex;
@@ -852,13 +586,8 @@
             transition: width 1s ease;
         }
 
-        .progress-fill.success { 
-            background: linear-gradient(90deg, var(--success), #34d399); 
-        }
-        
-        .progress-fill.warning { 
-            background: linear-gradient(90deg, var(--warning), #fbbf24); 
-        }
+        .progress-fill.success { background: linear-gradient(90deg, var(--success), #34d399); }
+        .progress-fill.warning { background: linear-gradient(90deg, var(--warning), #fbbf24); }
 
         .info-card {
             background: var(--bg-white);
@@ -957,9 +686,7 @@
             gap: 0.5rem;
         }
 
-        .section-title i {
-            color: var(--gold);
-        }
+        .section-title i { color: var(--gold); }
 
         .courses-grid {
             display: grid;
@@ -993,13 +720,8 @@
             transition: transform 0.3s;
         }
 
-        .course-card:active {
-            transform: scale(0.98);
-        }
-
-        .course-card:hover::before {
-            transform: scaleX(1);
-        }
+        .course-card:active { transform: scale(0.98); }
+        .course-card:hover::before { transform: scaleX(1); }
 
         .course-icon {
             width: 60px;
@@ -1045,9 +767,7 @@
             width: 100%;
         }
 
-        .performance-card:active {
-            transform: scale(0.98);
-        }
+        .performance-card:active { transform: scale(0.98); }
 
         .perf-icon {
             width: 60px;
@@ -1110,9 +830,7 @@
                 box-shadow: 4px 0 25px rgba(0,0,0,0.2);
             }
             
-            .sidebar.collapsed {
-                width: var(--sidebar-width) !important;
-            }
+            .sidebar.collapsed { width: var(--sidebar-width) !important; }
             
             .sidebar.collapsed .sidebar-logo,
             .sidebar.collapsed .sidebar-subtitle,
@@ -1127,34 +845,19 @@
                 padding: 0.9rem 1.5rem;
             }
             
-            .sidebar.collapsed .collapse-icon {
-                display: none;
-            }
+            .sidebar.collapsed .collapse-icon { display: none; }
             
             .main-content {
                 margin-left: 0 !important;
                 width: 100% !important;
             }
             
-            .menu-toggle {
-                display: flex;
-            }
+            .menu-toggle { display: flex; }
             
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
+            .stats-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {
-            .login-container {
-                padding: 2rem 1.5rem;
-                border-radius: 20px;
-            }
-            
-            .login-logo {
-                font-size: 2rem;
-            }
-            
             .content-wrapper {
                 padding: 1rem;
                 padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
@@ -1165,38 +868,19 @@
                 border-radius: 16px;
             }
             
-            .welcome-banner h1 {
-                font-size: 1.25rem;
-            }
-            
-            .welcome-banner p {
-                font-size: 0.85rem;
-            }
+            .welcome-banner h1 { font-size: 1.25rem; }
+            .welcome-banner p { font-size: 0.85rem; }
             
             .courses-grid,
-            .performance-grid {
-                grid-template-columns: 1fr;
-            }
+            .performance-grid { grid-template-columns: 1fr; }
             
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
+            .info-grid { grid-template-columns: 1fr; }
             
-            .user-name {
-                display: none;
-            }
+            .user-name { display: none; }
+            .page-title { font-size: 1rem; }
             
-            .page-title {
-                font-size: 1rem;
-            }
-            
-            .stat-card {
-                padding: 1rem;
-            }
-            
-            .stat-value {
-                font-size: 1.6rem;
-            }
+            .stat-card { padding: 1rem; }
+            .stat-value { font-size: 1.6rem; }
             
             .top-header {
                 padding: 0.75rem 1rem;
@@ -1219,17 +903,8 @@
         }
 
         @media (max-width: 400px) {
-            .login-container {
-                padding: 1.5rem 1rem;
-            }
-            
-            .content-wrapper {
-                padding: 0.75rem;
-            }
-            
-            .welcome-banner h1 {
-                font-size: 1.1rem;
-            }
+            .content-wrapper { padding: 0.75rem; }
+            .welcome-banner h1 { font-size: 1.1rem; }
             
             .page-title {
                 font-size: 0.9rem;
@@ -1244,369 +919,252 @@
             }
         }
 
-        .loading-dots {
-            display: inline-flex;
-            gap: 4px;
-        }
-
-        .loading-dots span {
-            width: 6px;
-            height: 6px;
-            background: currentColor;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
-        body.sidebar-open {
-            overflow: hidden;
-        }
+        body.sidebar-open { overflow: hidden; }
     </style>
 </head>
 <body>
-    <!-- ===== VISTA DE LOGIN ===== -->
-    <div id="loginView">
-        <button class="back-btn" onclick="volverAlInicio()">
-            <i class="fas fa-arrow-left"></i> Volver al Inicio
-        </button>
-
-        <div class="login-container">
-            <div class="login-header">
-                <div class="login-logo">JARVAZ</div>
-                <p class="login-subtitle">Plataforma de Excelencia Académica</p>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <div class="dashboard-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">JARVAZ</div>
+                <div class="sidebar-subtitle">Ciclo Premium</div>
+                <i class="fas fa-chevron-left collapse-icon"></i>
             </div>
+            <nav class="sidebar-menu">
+                <a class="menu-item active" data-section="inicio" data-title="Inicio">
+                    <i class="fas fa-home"></i>
+                    <span>Inicio</span>
+                </a>
+                <a class="menu-item" data-section="cursos" data-title="Mis Cursos">
+                    <i class="fas fa-book"></i>
+                    <span>Mis Cursos</span>
+                </a>
+                <a class="menu-item" data-section="rendimiento" data-title="Mi Rendimiento">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Mi Rendimiento</span>
+                </a>
+                <a class="menu-item" data-action="logout" data-title="Cerrar Sesión">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </nav>
+        </aside>
 
-            <a href="https://wa.me/51973441252?text=Hola%20administrador%20de%20JARVAZ,%20quiero%20obtener%20mi%20c%C3%B3digo%20y%20conocer%20los%20precios%20del%20Ciclo%20Premium." target="_blank" class="btn-whatsapp">
-                <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i> Solicitar mi Código de Acceso
-            </a>
-
-            <div class="divider"><span>Acceso a Estudiantes</span></div>
-
-            <div id="alertBox" class="alert"></div>
-
-            <form id="premiumForm" onsubmit="event.preventDefault(); verificarAcceso();">
-                <div class="form-group">
-                    <label>ID de Usuario</label>
-                    <i class="fas fa-id-badge"></i>
-                    <input type="text" id="inputId" class="form-input" placeholder="Ej: U1690000000000" required>
-                </div>
-                <div class="form-group">
-                    <label>Clave de Acceso (DNI + Número)</label>
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="inputClave" class="form-input" placeholder="Ej: 7012345699" required>
-                </div>
-                <button type="submit" id="btnSubmit" class="btn-submit">
-                    <span id="btnText">Ingresar al Ciclo Premium</span>
-                    <span id="btnLoader" style="display:none;">
-                        <span class="loading-dots"><span></span><span></span><span></span></span> Verificando...
-                    </span>
+        <main class="main-content">
+            <header class="top-header">
+                <button class="menu-toggle" id="menuToggleBtn" aria-label="Abrir menú">
+                    <i class="fas fa-bars"></i>
                 </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- ===== VISTA DASHBOARD ===== -->
-    <div id="dashboardView">
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        
-        <div class="dashboard-layout">
-            <aside class="sidebar" id="sidebar">
-                <div class="sidebar-header">
-                    <div class="sidebar-logo">JARVAZ</div>
-                    <div class="sidebar-subtitle">Ciclo Premium</div>
-                    <i class="fas fa-chevron-left collapse-icon"></i>
-                </div>
-                <nav class="sidebar-menu">
-                    <a class="menu-item active" data-section="inicio" data-title="Inicio">
-                        <i class="fas fa-home"></i>
-                        <span>Inicio</span>
-                    </a>
-                    <a class="menu-item" data-section="cursos" data-title="Mis Cursos">
-                        <i class="fas fa-book"></i>
-                        <span>Mis Cursos</span>
-                    </a>
-                    <a class="menu-item" data-section="rendimiento" data-title="Mi Rendimiento">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Mi Rendimiento</span>
-                    </a>
-                    <a class="menu-item" data-action="logout" data-title="Cerrar Sesión">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Cerrar Sesión</span>
-                    </a>
-                </nav>
-            </aside>
-
-            <main class="main-content">
-                <header class="top-header">
-                    <button class="menu-toggle" id="menuToggleBtn" aria-label="Abrir menú">
-                        <i class="fas fa-bars"></i>
+                <h1 class="page-title">Panel Académico</h1>
+                
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="icon-btn" id="fullscreenBtn" title="Ampliar pantalla">
+                        <i class="fas fa-expand"></i>
                     </button>
-                    <h1 class="page-title">Panel Académico</h1>
-                    
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <button class="icon-btn" id="fullscreenBtn" title="Ampliar pantalla">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                        <button class="icon-btn" onclick="volverAlInicio()" title="Volver al inicio">
-                            <i class="fas fa-house-user"></i>
-                        </button>
+                    <button class="icon-btn" onclick="volverAlClave()" title="Volver a pantalla de acceso">
+                        <i class="fas fa-key"></i>
+                    </button>
 
-                        <div class="user-info">
-                            <div class="user-avatar" id="userAvatar">JM</div>
-                            <div class="user-name" id="userNameHeader">Estudiante</div>
-                        </div>
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">JM</div>
+                        <div class="user-name" id="userNameHeader">Estudiante</div>
                     </div>
-                </header>
+                </div>
+            </header>
 
-                <div class="content-wrapper">
-                    <div id="section-inicio" class="section active">
-                        <div class="welcome-banner">
-                            <h1>Bienvenido, <span id="userNameDisplay">Estudiante JARVAZ</span></h1>
-                            <p>Plataforma de Excelencia Académica - Tu camino a la universidad</p>
-                            <div class="premium-badge">
-                                <i class="fas fa-check-circle"></i> Suscripción Premium Activa
-                            </div>
-                        </div>
-
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-header">
-                                    <div>
-                                        <div class="stat-title">Cursos Activos</div>
-                                        <div class="stat-value">3</div>
-                                    </div>
-                                    <div class="stat-icon gold">
-                                        <i class="fas fa-book"></i>
-                                    </div>
-                                </div>
-                                <div class="stat-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 100%"></div>
-                                    </div>
-                                    <span style="color: var(--gold); font-weight: 600;">100%</span>
-                                </div>
-                            </div>
-
-                            <div class="stat-card">
-                                <div class="stat-header">
-                                    <div>
-                                        <div class="stat-title">Progreso General</div>
-                                        <div class="stat-value">0%</div>
-                                    </div>
-                                    <div class="stat-icon blue">
-                                        <i class="fas fa-chart-pie"></i>
-                                    </div>
-                                </div>
-                                <div class="stat-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 0%"></div>
-                                    </div>
-                                    <span style="color: var(--info); font-weight: 600;">0%</span>
-                                </div>
-                            </div>
-
-                            <div class="stat-card">
-                                <div class="stat-header">
-                                    <div>
-                                        <div class="stat-title">Créditos Aprobados</div>
-                                        <div class="stat-value">0</div>
-                                    </div>
-                                    <div class="stat-icon green">
-                                        <i class="fas fa-check-circle"></i>
-                                    </div>
-                                </div>
-                                <div class="stat-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill success" style="width: 0%"></div>
-                                    </div>
-                                    <span style="color: var(--success); font-weight: 600;">0%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="info-card">
-                            <h3><i class="fas fa-user-circle"></i> Información del Estudiante</h3>
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <i class="fas fa-envelope"></i>
-                                    <div class="info-item-content">
-                                        <label>Correo Electrónico</label>
-                                        <span id="userDataEmail" title="">-</span>
-                                    </div>
-                                </div>
-                                <div class="info-item">
-                                    <i class="fas fa-phone-alt"></i>
-                                    <div class="info-item-content">
-                                        <label>Teléfono</label>
-                                        <span id="userDataPhone">-</span>
-                                    </div>
-                                </div>
-                                <div class="info-item" id="dataColegioItem" style="display:none;">
-                                    <i class="fas fa-school"></i>
-                                    <div class="info-item-content">
-                                        <label>Colegio</label>
-                                        <span id="userDataColegio">-</span>
-                                    </div>
-                                </div>
-                                <div class="info-item" id="dataGradoItem" style="display:none;">
-                                    <i class="fas fa-graduation-cap"></i>
-                                    <div class="info-item-content">
-                                        <label>Grado</label>
-                                        <span id="userDataGrado">-</span>
-                                    </div>
-                                </div>
-                            </div>
+            <div class="content-wrapper">
+                <div id="section-inicio" class="section active">
+                    <div class="welcome-banner">
+                        <h1>Bienvenido, <span id="userNameDisplay">Estudiante JARVAZ</span></h1>
+                        <p>Plataforma de Excelencia Académica - Tu camino a la universidad</p>
+                        <div class="premium-badge">
+                            <i class="fas fa-check-circle"></i> Suscripción Premium Activa
                         </div>
                     </div>
 
-                    <div id="section-cursos" class="section">
-                        <div class="section-header">
-                            <h2 class="section-title">
-                                <i class="fas fa-book-open"></i> Mis Cursos Premium
-                            </h2>
-                        </div>
-                        <div class="courses-grid">
-                            <div class="course-card" onclick="alert('Módulo de NÚMEROS: Próximamente disponible con clases en vivo y prácticas calificadas.')">
-                                <div class="course-icon">
-                                    <i class="fas fa-calculator"></i>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div>
+                                    <div class="stat-title">Cursos Activos</div>
+                                    <div class="stat-value">3</div>
                                 </div>
-                                <h4>NÚMEROS</h4>
-                                <p>Domina Aritmética, Álgebra y Geometría con metodología preuniversitaria de alto nivel.</p>
+                                <div class="stat-icon gold">
+                                    <i class="fas fa-book"></i>
+                                </div>
                             </div>
-                            <div class="course-card" onclick="alert('Módulo de LETRAS: Próximamente disponible con clases en vivo y prácticas calificadas.')">
-                                <div class="course-icon">
-                                    <i class="fas fa-feather-alt"></i>
+                            <div class="stat-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%"></div>
                                 </div>
-                                <h4>LETRAS</h4>
-                                <p>Comunicación, Historia del Perú y Universal, y Cívica con enfoque en admisión.</p>
-                            </div>
-                            <div class="course-card" onclick="alert('Módulo de CIENCIAS: Próximamente disponible con clases en vivo y prácticas calificadas.')">
-                                <div class="course-icon">
-                                    <i class="fas fa-flask"></i>
-                                </div>
-                                <h4>CIENCIAS</h4>
-                                <p>Física, Química y Biología con resolución de problemas de admisión.</p>
+                                <span style="color: var(--gold); font-weight: 600;">100%</span>
                             </div>
                         </div>
-                    </div>
 
-                    <div id="section-rendimiento" class="section">
-                        <div class="section-header">
-                            <h2 class="section-title">
-                                <i class="fas fa-chart-line"></i> Mi Rendimiento
-                            </h2>
-                        </div>
-                        <div class="performance-grid">
-                            <div class="performance-card">
-                                <div class="perf-icon blue">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div>
+                                    <div class="stat-title">Progreso General</div>
+                                    <div class="stat-value">0%</div>
+                                </div>
+                                <div class="stat-icon blue">
                                     <i class="fas fa-chart-pie"></i>
                                 </div>
-                                <h4>Mi Progreso</h4>
-                                <p>Visualiza tu avance semanal</p>
                             </div>
-                            <div class="performance-card">
-                                <div class="perf-icon green">
-                                    <i class="fas fa-bullseye"></i>
+                            <div class="stat-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
                                 </div>
-                                <h4>Mis Metas</h4>
-                                <p>Objetivos académicos</p>
+                                <span style="color: var(--info); font-weight: 600;">0%</span>
                             </div>
-                            <div class="performance-card">
-                                <div class="perf-icon gold">
-                                    <i class="fas fa-trophy"></i>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div>
+                                    <div class="stat-title">Créditos Aprobados</div>
+                                    <div class="stat-value">0</div>
                                 </div>
-                                <h4>Mis Logros</h4>
-                                <p>Recompensas por esfuerzo</p>
+                                <div class="stat-icon green">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
                             </div>
-                            <div class="performance-card">
-                                <div class="perf-icon red">
-                                    <i class="fas fa-video"></i>
+                            <div class="stat-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill success" style="width: 0%"></div>
                                 </div>
-                                <h4>Próximas Clases</h4>
-                                <p>Calendario de sesiones en vivo</p>
+                                <span style="color: var(--success); font-weight: 600;">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fas fa-user-circle"></i> Información del Estudiante</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <i class="fas fa-envelope"></i>
+                                <div class="info-item-content">
+                                    <label>Correo Electrónico</label>
+                                    <span id="userDataEmail" title="">-</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-phone-alt"></i>
+                                <div class="info-item-content">
+                                    <label>Teléfono</label>
+                                    <span id="userDataPhone">-</span>
+                                </div>
+                            </div>
+                            <div class="info-item" id="dataColegioItem" style="display:none;">
+                                <i class="fas fa-school"></i>
+                                <div class="info-item-content">
+                                    <label>Colegio</label>
+                                    <span id="userDataColegio">-</span>
+                                </div>
+                            </div>
+                            <div class="info-item" id="dataGradoItem" style="display:none;">
+                                <i class="fas fa-graduation-cap"></i>
+                                <div class="info-item-content">
+                                    <label>Grado</label>
+                                    <span id="userDataGrado">-</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+
+                <div id="section-cursos" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-book-open"></i> Mis Cursos Premium
+                        </h2>
+                    </div>
+                    <div class="courses-grid">
+                        <div class="course-card" onclick="alert('Módulo de NÚMEROS: Próximamente disponible con clases en vivo y prácticas calificadas.')">
+                            <div class="course-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <h4>NÚMEROS</h4>
+                            <p>Domina Aritmética, Álgebra y Geometría con metodología preuniversitaria de alto nivel.</p>
+                        </div>
+                        <div class="course-card" onclick="alert('Módulo de LETRAS: Próximamente disponible con clases en vivo y prácticas calificadas.')">
+                            <div class="course-icon">
+                                <i class="fas fa-feather-alt"></i>
+                            </div>
+                            <h4>LETRAS</h4>
+                            <p>Comunicación, Historia del Perú y Universal, y Cívica con enfoque en admisión.</p>
+                        </div>
+                        <div class="course-card" onclick="alert('Módulo de CIENCIAS: Próximamente disponible con clases en vivo y prácticas calificadas.')">
+                            <div class="course-icon">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <h4>CIENCIAS</h4>
+                            <p>Física, Química y Biología con resolución de problemas de admisión.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="section-rendimiento" class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-chart-line"></i> Mi Rendimiento
+                        </h2>
+                    </div>
+                    <div class="performance-grid">
+                        <div class="performance-card">
+                            <div class="perf-icon blue">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <h4>Mi Progreso</h4>
+                            <p>Visualiza tu avance semanal</p>
+                        </div>
+                        <div class="performance-card">
+                            <div class="perf-icon green">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <h4>Mis Metas</h4>
+                            <p>Objetivos académicos</p>
+                        </div>
+                        <div class="performance-card">
+                            <div class="perf-icon gold">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <h4>Mis Logros</h4>
+                            <p>Recompensas por esfuerzo</p>
+                        </div>
+                        <div class="performance-card">
+                            <div class="perf-icon red">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <h4>Próximas Clases</h4>
+                            <p>Calendario de sesiones en vivo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
-
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const menuToggleBtn = document.getElementById('menuToggleBtn');
-        const dashboardView = document.getElementById('dashboardView');
 
-        // ✅ NUEVA FUNCIÓN: Volver al inicio con replace() para no dejar rastro en el historial
-        function volverAlInicio() {
-            window.location.replace('inicio_de_sesion_general.html');
+        // ✅ Volver a la pantalla de claves (paso lógico previo)
+        function volverAlClave() {
+            window.location.replace('clave_ciclo_premium_jarvaz.html');
         }
 
-        // ✅ INICIALIZACIÓN BLINDADA (SEGURIDAD)
-        window.addEventListener('DOMContentLoaded', () => {
-            // PASO 1: Obtener la sesión principal actual (JARVAZ)
-            let sesionPrincipal = null;
-            try {
-                const sp = localStorage.getItem('jarvaz_sesion');
-                if (sp) sesionPrincipal = JSON.parse(sp);
-            } catch(e) {
-                console.error('Error leyendo sesión principal:', e);
+        // ✅ Cerrar sesión del Ciclo Premium: borra premium y regresa al login general
+        function cerrarSesionPremium() {
+            if (confirm('¿Deseas salir del Ciclo Premium?')) {
+                localStorage.removeItem('jarvaz_premium_sesion');
+                // NO borramos jarvaz_sesion, solo la sesión premium
+                window.location.replace('inicio_de_sesion_general.html');
             }
-
-            // PASO 2: Si NO hay sesión principal, redirigir al login de JARVAZ
-            if (!sesionPrincipal || (!sesionPrincipal.nombres && !sesionPrincipal.Nombres)) {
-                showAlert('Debes iniciar sesión en JARVAZ primero.', 'error');
-                setTimeout(() => {
-                    window.location.replace('inicio.html');  // ✅ replace, no href
-                }, 1500);
-                return;
-            }
-
-            // PASO 3: Obtener ID y email de la sesión principal actual
-            const idPrincipalActual = String(sesionPrincipal.id || sesionPrincipal.ID || '').trim();
-            const emailPrincipalActual = String(sesionPrincipal.email || sesionPrincipal.Email || '').toLowerCase().trim();
-
-            // PASO 4: Verificar sesión premium guardada
-            const sesionPremium = localStorage.getItem('jarvaz_premium_sesion');
-            if (sesionPremium) {
-                try {
-                    const userPremium = JSON.parse(sesionPremium);
-                    
-                    // PASO 5: VALIDACIÓN CRÍTICA - ¿La sesión premium pertenece al usuario actual?
-                    const idPremiumGuardado = String(userPremium.ID || userPremium.id || '').trim();
-                    const emailPremiumGuardado = String(userPremium.Email || userPremium.email || '').toLowerCase().trim();
-                    
-                    const coincideID = idPrincipalActual && idPremiumGuardado && idPrincipalActual === idPremiumGuardado;
-                    const coincideEmail = emailPrincipalActual && emailPremiumGuardado && emailPrincipalActual === emailPremiumGuardado;
-                    
-                    if (coincideID || coincideEmail) {
-                        // ✅ Mismo usuario → mostrar su dashboard premium
-                        console.log('✅ Sesión premium válida para este usuario');
-                        mostrarDashboard(userPremium);
-                    } else {
-                        // ❌ DIFERENTE USUARIO → borrar y pedir credenciales nuevas
-                        console.warn('⚠️ Sesión premium pertenece a OTRO usuario. Limpiando...');
-                        localStorage.removeItem('jarvaz_premium_sesion');
-                        showAlert('Por seguridad, ingresa tu ID y Clave de Acceso.', 'info');
-                    }
-                } catch(e) {
-                    console.error('Error en sesión premium:', e);
-                    localStorage.removeItem('jarvaz_premium_sesion');
-                }
-            }
-            
-            setupEventListeners();
-        });
+        }
 
         function setupEventListeners() {
             if (menuToggleBtn) {
@@ -1671,90 +1229,14 @@
             }, false);
         }
 
-        function showAlert(msg, type) {
-            const box = document.getElementById('alertBox');
-            box.className = `alert alert-${type}`;
-            box.textContent = msg;
-            box.style.display = 'block';
-            setTimeout(() => { 
-                box.style.opacity = '0';
-                setTimeout(() => { box.style.display = 'none'; box.style.opacity = '1'; }, 300);
-            }, 6000);
-        }
-
-        function llamarAPI(params) {
-            return new Promise((resolve, reject) => {
-                const cbName = 'jarvaz_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-                const script = document.createElement('script');
-                const timer = setTimeout(() => { cleanup(); reject(new Error('Tiempo de espera agotado.')); }, 15000);
-                function cleanup() {
-                    clearTimeout(timer);
-                    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
-                    if (script.parentNode) script.parentNode.removeChild(script);
-                }
-                window[cbName] = function (data) { cleanup(); resolve(data); };
-                params.callback = cbName;
-                const qs = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] == null ? '' : params[k])).join('&');
-                script.src = API_URL + '?' + qs;
-                script.onerror = function () { cleanup(); reject(new Error('Error de conexión.')); };
-                document.head.appendChild(script);
-            });
-        }
-
-        async function verificarAcceso() {
-            const idUsuario = document.getElementById('inputId').value.trim();
-            const clave = document.getElementById('inputClave').value.trim();
-            
-            let idSesion = '';
-            let emailActual = '';
+        function mostrarDashboard() {
+            let user = null;
             try {
-                const sesionPrincipal = JSON.parse(localStorage.getItem('jarvaz_sesion') || '{}');
-                idSesion = String(sesionPrincipal.id || sesionPrincipal.ID || '').trim();
-                emailActual = String(sesionPrincipal.email || sesionPrincipal.Email || '').toLowerCase().trim();
+                user = JSON.parse(localStorage.getItem('jarvaz_premium_sesion'));
             } catch(e) {
-                console.error("Error al leer la sesión:", e);
-            }
-
-            if (!idUsuario || !clave) {
-                showAlert('Por favor, completa ambos campos.', 'error');
                 return;
             }
-
-            const btn = document.getElementById('btnSubmit');
-            const btnText = document.getElementById('btnText');
-            const btnLoader = document.getElementById('btnLoader');
-
-            btn.disabled = true;
-            btnText.style.display = 'none';
-            btnLoader.style.display = 'inline';
-
-            try {
-                const res = await llamarAPI({ 
-                    action: 'verificarAccesoPremium', 
-                    idUsuario: idUsuario, 
-                    clave: clave,
-                    idSesion: idSesion,
-                    emailActual: emailActual
-                });
-                
-                if (res.status === 'success') {
-                    localStorage.setItem('jarvaz_premium_sesion', JSON.stringify(res.user));
-                    mostrarDashboard(res.user);
-                } else {
-                    showAlert(res.message || 'Credenciales incorrectas.', 'error');
-                }
-            } catch (err) {
-                showAlert('Error de conexión. Verifica tu internet e intenta de nuevo.', 'error');
-            } finally {
-                btn.disabled = false;
-                btnText.style.display = 'inline';
-                btnLoader.style.display = 'none';
-            }
-        }
-
-        function mostrarDashboard(user) {
-            document.getElementById('loginView').style.display = 'none';
-            dashboardView.classList.add('visible');
+            if (!user) return;
             
             const nombre = (user.Nombres || user.nombres || '') + ' ' + (user.Apellidos || user.apellidos || '');
             const initials = (user.Nombres ? user.Nombres[0] : 'E') + (user.Apellidos ? user.Apellidos[0] : 'J');
@@ -1783,7 +1265,6 @@
             }
             
             window.scrollTo(0, 0);
-            
             animateStats();
         }
 
@@ -1890,14 +1371,11 @@
             }
         }
 
-        // ✅ CIERRE DE SESIÓN PREMIUM MEJORADO: usa replace() y no deja rastro
-        function cerrarSesionPremium() {
-            if (confirm('¿Deseas salir del Ciclo Premium?')) {
-                localStorage.removeItem('jarvaz_premium_sesion');
-                localStorage.removeItem('jarvaz_sesion');
-                window.location.replace('inicio.html');  // ✅ replace, no href
-            }
-        }
+        // ✅ INICIALIZACIÓN
+        window.addEventListener('DOMContentLoaded', () => {
+            mostrarDashboard();
+            setupEventListeners();
+        });
     </script>
 </body>
 </html>
