@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html (MEJORADA) -->
     <script>
     (function () {
       try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
@@ -36,6 +36,25 @@
         window.location.replace(destino);
       }
       
+      // ✅ NUEVO: Función para bloquear el botón Atrás
+      function bloquearBotonAtras() {
+        // Agregar un estado al historial para interceptar el botón Atrás
+        history.pushState({ page: 'premium', timestamp: Date.now() }, '', window.location.href);
+        
+        // Interceptar el evento popstate (cuando se presiona Atrás)
+        window.addEventListener('popstate', function(event) {
+          // Si no hay sesión premium válida, bloquear navegación hacia atrás
+          if (!sesionPremiumValidaParaUsuarioActual()) {
+            // Volver hacia adelante para mantenerse en esta página
+            history.go(1);
+            // Redirigir a la pantalla de claves
+            setTimeout(function() {
+              redirigir('clave_ciclo_premium_jarvaz.html');
+            }, 100);
+          }
+        });
+      }
+      
       // 1) Si no hay sesión principal → ir al login general
       if (sesionPrincipalInvalida()) {
         redirigir('inicio.html');
@@ -48,14 +67,20 @@
         return;
       }
       
-      // 3) Todo válido: mostrar dashboard
+      // 3) Todo válido: mostrar dashboard y bloquear botón Atrás
       try { document.documentElement.style.visibility = 'visible'; } catch (e) {}
+      bloquearBotonAtras();
       
       // 4) Restauración desde caché (botón ◯ o <)
-      window.addEventListener('pageshow', function () {
-        if (sesionPrincipalInvalida()) redirigir('inicio.html');
-        else if (!sesionPremiumValidaParaUsuarioActual()) redirigir('clave_ciclo_premium_jarvaz.html');
-        else { try { document.documentElement.style.visibility = 'visible'; } catch (e) {} }
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+          if (sesionPrincipalInvalida()) redirigir('inicio.html');
+          else if (!sesionPremiumValidaParaUsuarioActual()) redirigir('clave_ciclo_premium_jarvaz.html');
+          else { 
+            try { document.documentElement.style.visibility = 'visible'; } catch (e) {} 
+            bloquearBotonAtras();
+          }
+        }
       });
       
       // 5) Volver del botón ◯
@@ -1157,12 +1182,12 @@
             window.location.replace('clave_ciclo_premium_jarvaz.html');
         }
 
-        // ✅ Cerrar sesión del Ciclo Premium: borra premium y regresa al login general
+        // ✅ Cerrar sesión del Ciclo Premium: borra premium y regresa a la pantalla de claves
         function cerrarSesionPremium() {
             if (confirm('¿Deseas salir del Ciclo Premium?')) {
                 localStorage.removeItem('jarvaz_premium_sesion');
-                // NO borramos jarvaz_sesion, solo la sesión premium
-                window.location.replace('inicio_de_sesion_general.html');
+                // ✅ CORREGIDO: Ahora regresa a la pantalla de claves, no al login general
+                window.location.replace('clave_ciclo_premium_jarvaz.html');
             }
         }
 
