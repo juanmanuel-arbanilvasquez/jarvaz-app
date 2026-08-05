@@ -119,6 +119,7 @@
   .profesor-notice { background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(139,26,42,0.12)); border:1px solid rgba(212,175,55,0.35); border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:0.7em; color:var(--crema); text-align:left; line-height:1.4; display:none; flex-shrink:0; }
   .profesor-notice strong { display:block; color:var(--oro-400); margin-bottom:2px; font-size:0.95em; }
   
+  /* ✅ BOTÓN GOOGLE SIGN-IN */
   .google-auth-section {
     background: linear-gradient(135deg, rgba(66,133,244,0.15), rgba(219,68,55,0.08));
     border: 1px solid rgba(66,133,244,0.4);
@@ -353,6 +354,7 @@
       Ingresa tu código de activación. Si no lo tienes, solicítalo con el botón de abajo.
     </div>
 
+    <!-- ✅ SECCIÓN GOOGLE PARA ALUMNO SECUNDARIA -->
     <div id="googleAuthSecundaria" class="google-auth-section hidden">
       <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail para crear una cuenta segura</p>
       <div class="google-btn-wrapper">
@@ -391,6 +393,7 @@
       <button type="submit" class="btn-gold">Crear Cuenta Segura</button>
     </form>
 
+    <!-- ✅ SECCIÓN GOOGLE PARA PÚBLICO -->
     <div id="googleAuthPublico" class="google-auth-section hidden">
       <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail para crear una cuenta segura</p>
       <div class="google-btn-wrapper">
@@ -425,6 +428,7 @@
       <button type="submit" class="btn-gold">Crear Cuenta Segura</button>
     </form>
 
+    <!-- ✅ SECCIÓN GOOGLE PARA PROFESOR -->
     <div id="googleAuthProfesor" class="google-auth-section hidden">
       <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail</p>
       <div class="google-btn-wrapper">
@@ -485,8 +489,7 @@
   </div>
 
   <div class="footer">
-    <!-- ✅ CAMBIO: Se agregó ?preview=1 al URL para indicar modo invitado -->
-    <a href="inicio_de_sesion_general.html?preview=1" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion'); localStorage.removeItem('jarvaz_premium_sesion');">
+    <a href="inicio_de_sesion_general.html" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion');">
       <i class="fas fa-eye"></i> Vista Previa del App (Modo Invitado)
     </a>
     <br>
@@ -498,9 +501,13 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
   const WHATSAPP_ADMIN = '51973441252';
 
+  // ✅ ESTADO GLOBAL DE GOOGLE
   let googleUserActual = null;
   let formularioActivo = null;
 
+  // ============================================================
+  // GOOGLE SIGN-IN: Callback que se ejecuta al elegir cuenta
+  // ============================================================
   function handleGoogleCredential(response) {
     try {
       const payload = decodeJwt(response.credential);
@@ -659,7 +666,6 @@
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
       localStorage.removeItem('jarvaz_sesion');
-      localStorage.removeItem('jarvaz_premium_sesion');
       location.reload();
     }
   }
@@ -832,7 +838,7 @@
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
         showAlert('✅ ¡Cuenta segura creada! Tus datos están protegidos con Google. Redirigiendo...', 'success');
-        setTimeout(() => { window.location.replace("inicio_de_sesion_general.html"); }, 1800);
+        setTimeout(() => { window.location.href = "inicio_de_sesion_general.html"; }, 1800);
       } else {
         showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
       }
@@ -872,7 +878,7 @@
           localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
           mostrarSesionActiva(user);
           showAlert('✅ ¡Bienvenido de vuelta, profesor ' + (user.nombres || '') + '!', 'success');
-          setTimeout(() => { window.location.replace("inicio_de_sesion_profesor.html"); }, 1200);
+          setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1200);
         } else {
           window._profCodigo = codigo;
           showAlert('✨ Código válido. Completa tus datos.', 'info');
@@ -920,7 +926,7 @@
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
         showAlert('✅ ¡Cuenta de profesor activada!', 'success');
-        setTimeout(() => { window.location.replace("inicio_de_sesion_profesor.html"); }, 1500);
+        setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1500);
       } else {
         showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
       }
@@ -966,8 +972,7 @@
         mostrarSesionActiva(user);
         showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
         setTimeout(() => {
-          const destino = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
-          window.location.replace(destino);
+          window.location.href = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
         }, 1200);
       } else {
         showAlert('❌ ' + (res.message || 'Credenciales incorrectas'), 'error');
@@ -990,8 +995,7 @@
         mostrarSesionActiva(user);
         showAlert('✅ ¡Bienvenido ' + (user.nombres || '') + '!', 'success');
         setTimeout(() => {
-          const destino = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
-          window.location.replace(destino);
+          window.location.href = (user.tipo === 'profesor') ? "inicio_de_sesion_profesor.html" : "inicio_de_sesion_general.html";
         }, 1000);
       } else {
         showAlert('❌ Ese Gmail no corresponde a esta cuenta. Usa: ' + user.email, 'error');
@@ -1000,23 +1004,7 @@
     }
   };
 
-  window.addEventListener('popstate', function(event) {
-    verificarSesion();
-  });
-
-  window.addEventListener('pageshow', function(event) {
-    if (event.persisted) {
-      verificarSesion();
-    }
-  });
-
-  window.addEventListener('DOMContentLoaded', () => { 
-    verificarSesion(); 
-    
-    if (!window.history.state || !window.history.state.jarvaz_inicio) {
-      window.history.replaceState({ jarvaz_inicio: true }, '', window.location.href);
-    }
-  });
+  window.addEventListener('DOMContentLoaded', () => { verificarSesion(); });
 </script>
 </body>
 </html>
