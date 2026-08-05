@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-900-normal.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- ✅ GOOGLE SIGN-IN -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -275,6 +276,7 @@
 </head>
 <body>
 
+<!-- ✅ CONFIGURACIÓN DE GOOGLE SIGN-IN -->
 <div id="g_id_onload"
      data-client_id="484497769939-449tu3aocgdg9q34lornq338mu7ulmg2.apps.googleusercontent.com"
      data-context="signin"
@@ -483,7 +485,7 @@
   </div>
 
   <div class="footer">
-    <!-- ✅ ÚNICO CAMBIO: Agregado ?preview=1 al href -->
+    <!-- ✅ CAMBIO: Se agregó ?preview=1 al URL para indicar modo invitado -->
     <a href="inicio_de_sesion_general.html?preview=1" class="preview-btn" onclick="localStorage.removeItem('jarvaz_sesion'); localStorage.removeItem('jarvaz_premium_sesion');">
       <i class="fas fa-eye"></i> Vista Previa del App (Modo Invitado)
     </a>
