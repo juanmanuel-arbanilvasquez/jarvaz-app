@@ -10,11 +10,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-900-normal.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- ✅ GOOGLE SIGN-IN -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  /* ✅ SOLUCIÓN 1: Color de fondo de respaldo para evitar pantalla blanca */
   html, body { height: 100%; overflow: hidden; background-color: #2D0A0F; }
   :root {
     --vino-900: #2D0A0F; --vino-800: #4A0E17; --vino-700: #6B1420; --vino-600: #8B1A2A;
@@ -37,7 +35,6 @@
     position: relative; z-index: 1; animation: slideUp 0.7s ease-out;
     display: flex; flex-direction: column; overflow: hidden;
   }
-  /* ✅ SOLUCIÓN 1: Se eliminó el opacity:0 inicial para carga instantánea */
   @keyframes slideUp { from{transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
   .container::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--oro-500),transparent); }
   .header-compact { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; flex-shrink:0; }
@@ -121,7 +118,6 @@
   .profesor-notice { background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(139,26,42,0.12)); border:1px solid rgba(212,175,55,0.35); border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:0.7em; color:var(--crema); text-align:left; line-height:1.4; display:none; flex-shrink:0; }
   .profesor-notice strong { display:block; color:var(--oro-400); margin-bottom:2px; font-size:0.95em; }
   
-  /* ✅ BOTÓN GOOGLE SIGN-IN */
   .google-auth-section {
     background: linear-gradient(135deg, rgba(66,133,244,0.15), rgba(219,68,55,0.08));
     border: 1px solid rgba(66,133,244,0.4);
@@ -279,7 +275,6 @@
 </head>
 <body>
 
-<!-- ✅ CONFIGURACIÓN DE GOOGLE SIGN-IN -->
 <div id="g_id_onload"
      data-client_id="484497769939-449tu3aocgdg9q34lornq338mu7ulmg2.apps.googleusercontent.com"
      data-context="signin"
@@ -342,7 +337,6 @@
   <div id="alertBox" class="alert"></div>
 
   <div class="main-content">
-    <!-- ✅ SOLUCIÓN 1: SECCIÓN INICIAR SESIÓN MOVIDA AL PRINCIPIO PARA ACCESO DIRECTO -->
     <div class="divider"><span>Iniciar Sesión</span></div>
     <input type="text" id="login_contacto" placeholder="Correo o Teléfono">
     <div class="password-wrap">
@@ -358,7 +352,6 @@
       <a id="btnCrearCuenta" style="color: var(--oro-400); text-decoration: none; font-weight: 600; cursor: pointer; font-size: 0.82em;">¿No tienes cuenta? Crea tu cuenta aquí</a>
     </div>
 
-    <!-- ✅ SECCIÓN CREAR CUENTA MOVIDA DEBAJO -->
     <div class="select-wrap">
       <select id="categoria">
         <option value="">Selecciona tu categoría</option>
@@ -373,7 +366,6 @@
       Ingresa tu código de activación. Si no lo tienes, solicítalo con el botón de abajo.
     </div>
 
-    <!-- ✅ SECCIÓN GOOGLE PARA ALUMNO SECUNDARIA -->
     <div id="googleAuthSecundaria" class="google-auth-section hidden">
       <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail para crear una cuenta segura</p>
       <div class="google-btn-wrapper">
@@ -412,7 +404,6 @@
       <button type="submit" class="btn-gold">Crear Cuenta Segura</button>
     </form>
 
-    <!-- ✅ SECCIÓN GOOGLE PARA PÚBLICO -->
     <div id="googleAuthPublico" class="google-auth-section hidden">
       <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail para crear una cuenta segura</p>
       <div class="google-btn-wrapper">
@@ -447,7 +438,6 @@
       <button type="submit" class="btn-gold">Crear Cuenta Segura</button>
     </form>
 
-    <!-- ✅ SECCIÓN GOOGLE PARA PROFESOR -->
     <div id="googleAuthProfesor" class="google-auth-section hidden">
       <p><i class="fas fa-shield-halved"></i> Verifica tu identidad con tu cuenta de Gmail</p>
       <div class="google-btn-wrapper">
@@ -497,7 +487,6 @@
   </div>
 
   <div class="footer">
-    <!-- ✅ SOLUCIÓN 2: LLAMADA A LA NUEVA FUNCIÓN DE MODO INVITADO -->
     <a href="inicio_de_sesion_general.html" class="preview-btn" onclick="iniciarModoInvitado(event); return false;">
       <i class="fas fa-eye"></i> Vista Previa del App (Modo Invitado)
     </a>
@@ -508,13 +497,28 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
   const WHATSAPP_ADMIN = '51973441252';
 
-  // ✅ ESTADO GLOBAL DE GOOGLE
   let googleUserActual = null;
   let formularioActivo = null;
 
-  // ============================================================
-  // GOOGLE SIGN-IN: Callback que se ejecuta al elegir cuenta
-  // ============================================================
+  // ✅ SOLUCIÓN BOTÓN ATRÁS: Función para bloquear la navegación hacia atrás después de cerrar sesión
+  function bloquearBotonAtras() {
+    // Verificar si no hay sesión activa (usuario cerró sesión o es primera vez)
+    const sesion = localStorage.getItem('jarvaz_sesion');
+    
+    if (!sesion || (sesion && JSON.parse(sesion).isGuest)) {
+      // Crear un estado en el historial para interceptar el botón Atrás
+      history.pushState({ page: 'inicio' }, '', window.location.href);
+      
+      // Interceptar el evento popstate (cuando el usuario presiona Atrás)
+      window.addEventListener('popstate', function(event) {
+        // Si el estado es de inicio o no hay estado, forzar a permanecer en inicio
+        if (!event.state || (event.state && event.state.page === 'inicio')) {
+          history.go(1); // Volver hacia adelante para mantenerse en inicio
+        }
+      });
+    }
+  }
+
   function handleGoogleCredential(response) {
     try {
       const payload = decodeJwt(response.credential);
@@ -648,7 +652,6 @@
         const user = JSON.parse(sesion);
         const tipo = (user.tipo || user.categoria || '').toLowerCase();
         
-        // Si es invitado, no redirigir (permite permanecer en la pantalla actual)
         if (user.isGuest) return;
         
         let destino = 'inicio_de_sesion_general.html';
@@ -674,20 +677,19 @@
     badge.classList.add('active');
   }
 
+  // ✅ SOLUCIÓN BOTÓN ATRÁS: Función mejorada para cerrar sesión
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
       localStorage.removeItem('jarvaz_sesion');
-      location.reload();
+      // Usar replace() en lugar de href para limpiar el historial
+      window.location.replace('inicio.html');
     }
   }
 
-  // ✅ SOLUCIÓN 2: FUNCIÓN PARA MODO INVITADO (Evita el parpadeo)
   function iniciarModoInvitado(event) {
     if (event) event.preventDefault();
     localStorage.removeItem('jarvaz_sesion');
     
-    // Se crea una sesión temporal de "invitado" para que la página de destino
-    // detecte que hay un usuario válido y no te redirija de vuelta al login.
     const invitado = {
       id: 'guest_mode',
       tipo: 'invitado',
@@ -1037,8 +1039,10 @@
   };
 
   window.addEventListener('DOMContentLoaded', () => { 
-    verificarSesion(); 
-    // ✅ SOLUCIÓN 1: Enfoque directo al campo de Iniciar Sesión
+    verificarSesion();
+    // ✅ SOLUCIÓN BOTÓN ATRÁS: Activar el bloqueo al cargar la página
+    bloquearBotonAtras();
+    
     const loginInput = document.getElementById('login_contacto');
     if (loginInput) {
       setTimeout(() => {
