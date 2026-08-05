@@ -500,38 +500,67 @@
   let googleUserActual = null;
   let formularioActivo = null;
 
-  // ✅ SOLUCIÓN DEFINITIVA: Sistema de bloqueo de botón Atrás + Validación de sesión en tiempo real
-  function bloquearBotonAtras() {
+  // ✅ SOLUCIÓN COMPLETA: Función para manejar el historial y prevenir navegación hacia atrás
+  function inicializarProteccionHistorial() {
+    // Verificar si hay sesión activa
     const sesion = localStorage.getItem('jarvaz_sesion');
+    let tieneSesion = false;
     
-    if (!sesion || (sesion && JSON.parse(sesion).isGuest)) {
-      // Crear múltiples estados en el historial para mayor robustez
-      history.pushState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
+    if (sesion) {
+      try {
+        const user = JSON.parse(sesion);
+        tieneSesion = !!user && !user.isGuest;
+      } catch (e) {
+        localStorage.removeItem('jarvaz_sesion');
+      }
+    }
+    
+    // Si NO hay sesión, proteger contra navegación hacia atrás
+    if (!tieneSesion) {
+      // Limpiar cualquier estado previo del historial
+      history.replaceState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
+      
+      // Agregar un estado adicional para interceptar el botón Atrás
       history.pushState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
       
-      // Interceptar el evento popstate de forma más agresiva
+      // Interceptar el evento popstate (botón Atrás)
       window.addEventListener('popstate', function(event) {
-        // Siempre forzar a permanecer en inicio
-        setTimeout(() => {
-          history.go(1); // Volver hacia adelante
-        }, 0);
+        // Si no hay estado o el estado es de inicio, forzar a permanecer aquí
+        if (!event.state || (event.state && event.state.page === 'inicio')) {
+          // Prevenir navegación hacia atrás
+          history.go(1);
+          
+          // Como respaldo, volver a establecer el estado
+          setTimeout(() => {
+            history.replaceState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
+          }, 100);
+        }
       });
-    }
-  }
-
-  // ✅ VALIDACIÓN DE SESIÓN EN TIEMPO REAL (Cuando la app vuelve a estar visible)
-  function validarSesionAlVolver() {
-    document.addEventListener('visibilitychange', function() {
-      if (!document.hidden) {
-        // La app volvió a estar visible, verificar si hay sesión
-        const sesion = localStorage.getItem('jarvaz_sesion');
-        if (!sesion) {
-          // No hay sesión, limpiar el historial y forzar recarga
-          window.history.replaceState(null, '', window.location.href);
-          location.reload();
+      
+      // Prevenir navegación hacia atrás con gestos en móviles
+      let touchStartX = 0;
+      let touchEndX = 0;
+      
+      document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      
+      document.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }, { passive: true });
+      
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        // Detectar swipe hacia la derecha (gesto de "atrás" en móviles)
+        if (touchEndX - touchStartX > swipeThreshold) {
+          // Si hay swipe de atrás, forzar a permanecer en inicio
+          if (history.state && history.state.page === 'inicio') {
+            history.go(1);
+          }
         }
       }
-    });
+    }
   }
 
   function handleGoogleCredential(response) {
@@ -692,15 +721,15 @@
     badge.classList.add('active');
   }
 
-  // ✅ FUNCIÓN MEJORADA DE CERRAR SESIÓN: Limpia historial completamente
+  // ✅ SOLUCIÓN: Función mejorada para cerrar sesión que limpia el historial
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
       localStorage.removeItem('jarvaz_sesion');
-      // Guardar timestamp de cierre de sesión para que otras páginas lo detecten
-      localStorage.setItem('jarvaz_sesion_cerrada', Date.now().toString());
       
-      // Limpiar completamente el historial y redirigir
-      window.history.replaceState(null, '', window.location.href);
+      // Limpiar completamente el historial antes de redirigir
+      history.replaceState({ page: 'inicio', logout: true }, '', window.location.href);
+      
+      // Redirigir a inicio.html reemplazando la entrada actual del historial
       window.location.replace('inicio.html');
     }
   }
@@ -1059,14 +1088,26 @@
 
   window.addEventListener('DOMContentLoaded', () => { 
     verificarSesion();
-    bloquearBotonAtras();
-    validarSesionAlVolver(); // ✅ Activar validación cuando la app vuelve a estar visible
+    // ✅ SOLUCIÓN COMPLETA: Inicializar protección del historial al cargar la página
+    inicializarProteccionHistorial();
     
     const loginInput = document.getElementById('login_contacto');
     if (loginInput) {
       setTimeout(() => {
         loginInput.focus();
       }, 100);
+    }
+  });
+  
+  // ✅ Protección adicional cuando la página se vuelve visible después de estar en background
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      // Cuando la página vuelve a ser visible, verificar el historial
+      const sesion = localStorage.getItem('jarvaz_sesion');
+      if (!sesion) {
+        // Si no hay sesión, asegurar que estamos en la página correcta
+        history.replaceState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
+      }
     }
   });
 </script>
