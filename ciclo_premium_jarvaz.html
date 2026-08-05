@@ -1,16 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - MEJORADA -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - MISMO PATRÓN QUE inicio_de_sesion_general.html -->
     <script>
+    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html */
     (function () {
-      // 🔒 BLOQUEO INMEDIATO: Ocultar ANTES de que el navegador pinte CUALQUIER cosa
-      try {
-        document.documentElement.style.visibility = 'hidden';
-        document.documentElement.style.opacity = '0';
-      } catch (e) {}
-      
-      function sesionPrincipalInvalida() {
+      function sesionInvalida() {
         try {
           var s = localStorage.getItem('jarvaz_sesion');
           if (!s) return true;
@@ -21,63 +16,70 @@
         } catch (e) { return true; }
       }
       
-      function sesionPremiumValida() {
+      function sesionPremiumInvalida() {
         try {
           var sp = localStorage.getItem('jarvaz_sesion');
           var sPrem = localStorage.getItem('jarvaz_premium_sesion');
-          if (!sp || !sPrem) return false;
+          if (!sp || !sPrem) return true;
+          
           var u = JSON.parse(sp);
           var p = JSON.parse(sPrem);
+          
           var idU = String(u.id || u.ID || '').trim();
           var emailU = String(u.email || u.Email || '').toLowerCase().trim();
           var idP = String(p.ID || p.id || '').trim();
           var emailP = String(p.Email || p.email || '').toLowerCase().trim();
-          return (idU && idP && idU === idP) || (emailU && emailP && emailU === emailP);
-        } catch (e) { return false; }
+          
+          var coincideID = idU && idP && idU === idP;
+          var coincideEmail = emailU && emailP && emailU === emailP;
+          
+          return !(coincideID || coincideEmail);
+        } catch (e) { return true; }
       }
       
-      function redirigir(destino) {
+      function redirigirInicio() {
         try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
-        window.location.replace(destino);
+        window.location.replace('inicio.html');
       }
       
-      function mostrarPagina() {
+      function redirigirClave() {
+        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+        window.location.replace('clave_ciclo_premium_jarvaz.html');
+      }
+      
+      function verificarYActuar() {
+        if (sesionInvalida()) {
+          redirigirInicio();
+          return;
+        }
+        if (sesionPremiumInvalida()) {
+          redirigirClave();
+          return;
+        }
+        // Sesión válida: mostrar página
         try {
           document.documentElement.style.visibility = 'visible';
           document.documentElement.style.opacity = '1';
         } catch (e) {}
       }
       
-      function verificarYActuar() {
-        if (sesionPrincipalInvalida()) {
-          redirigir('inicio.html');
-          return false;
-        }
-        if (!sesionPremiumValida()) {
-          redirigir('clave_ciclo_premium_jarvaz.html');
-          return false;
-        }
-        mostrarPagina();
-        return true;
-      }
+      // 1) Verificación inmediata al cargar
+      verificarYActuar();
       
-      // ✅ VERIFICACIÓN INMEDIATA (antes de cualquier renderizado)
-      if (!verificarYActuar()) return;
-      
-      // ✅ Protección al restaurar desde caché (botón ◯ o <)
+      // 2) Protección al restaurar desde caché (botón ◯ o <)
       window.addEventListener('pageshow', function (e) {
         verificarYActuar();
       });
       
-      // ✅ Protección al volver del botón ◯
+      // 3) Protección al volver del botón ◯
       document.addEventListener('visibilitychange', function () {
         if (!document.hidden) verificarYActuar();
       });
       
-      // ✅ Sincronización entre pestañas
+      // 4) Sincronización entre pestañas
       window.addEventListener('storage', function (e) {
-        if (e.key === 'jarvaz_sesion' && !e.newValue) redirigir('inicio.html');
-        if (e.key === 'jarvaz_premium_sesion' && !e.newValue) redirigir('clave_ciclo_premium_jarvaz.html');
+        if (e.key === 'jarvaz_sesion' && !e.newValue) redirigirInicio();
+        if (e.key === 'jarvaz_premium_sesion' && !e.newValue) redirigirClave();
       });
     })();
     </script>
@@ -91,7 +93,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 🔒 BLOQUEO POR CSS: Ocultar la página por defecto hasta que JS confirme sesión válida */
+        /* 🔒 BLOQUEO POR CSS: Ocultar la página por defecto */
         html {
             visibility: hidden;
             opacity: 0;
@@ -1166,16 +1168,14 @@
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const menuToggleBtn = document.getElementById('menuToggleBtn');
 
-        // ✅ Volver a la pantalla de claves usando replace()
         function volverAlClave() {
             window.location.replace('clave_ciclo_premium_jarvaz.html');
         }
 
-        // ✅ CERRAR SESIÓN CORREGIDO: Ahora regresa a clave_ciclo_premium_jarvaz.html
         function cerrarSesionPremium() {
             if (confirm('¿Deseas salir del Ciclo Premium?')) {
                 localStorage.removeItem('jarvaz_premium_sesion');
-                window.location.replace('clave_ciclo_premium_jarvaz.html');  // ✅ Corregido
+                window.location.replace('clave_ciclo_premium_jarvaz.html');
             }
         }
 
