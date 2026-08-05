@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html (MEJORADA) -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - MEJORADA -->
     <script>
     (function () {
-      try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+      // 🔒 BLOQUEO INMEDIATO: Ocultar ANTES de que el navegador pinte CUALQUIER cosa
+      try {
+        document.documentElement.style.visibility = 'hidden';
+        document.documentElement.style.opacity = '0';
+      } catch (e) {}
       
       function sesionPrincipalInvalida() {
         try {
@@ -17,7 +21,7 @@
         } catch (e) { return true; }
       }
       
-      function sesionPremiumValidaParaUsuarioActual() {
+      function sesionPremiumValida() {
         try {
           var sp = localStorage.getItem('jarvaz_sesion');
           var sPrem = localStorage.getItem('jarvaz_premium_sesion');
@@ -33,65 +37,44 @@
       }
       
       function redirigir(destino) {
+        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
         window.location.replace(destino);
       }
       
-      // ✅ NUEVO: Función para bloquear el botón Atrás
-      function bloquearBotonAtras() {
-        // Agregar un estado al historial para interceptar el botón Atrás
-        history.pushState({ page: 'premium', timestamp: Date.now() }, '', window.location.href);
-        
-        // Interceptar el evento popstate (cuando se presiona Atrás)
-        window.addEventListener('popstate', function(event) {
-          // Si no hay sesión premium válida, bloquear navegación hacia atrás
-          if (!sesionPremiumValidaParaUsuarioActual()) {
-            // Volver hacia adelante para mantenerse en esta página
-            history.go(1);
-            // Redirigir a la pantalla de claves
-            setTimeout(function() {
-              redirigir('clave_ciclo_premium_jarvaz.html');
-            }, 100);
-          }
-        });
+      function mostrarPagina() {
+        try {
+          document.documentElement.style.visibility = 'visible';
+          document.documentElement.style.opacity = '1';
+        } catch (e) {}
       }
       
-      // 1) Si no hay sesión principal → ir al login general
-      if (sesionPrincipalInvalida()) {
-        redirigir('inicio.html');
-        return;
+      function verificarYActuar() {
+        if (sesionPrincipalInvalida()) {
+          redirigir('inicio.html');
+          return false;
+        }
+        if (!sesionPremiumValida()) {
+          redirigir('clave_ciclo_premium_jarvaz.html');
+          return false;
+        }
+        mostrarPagina();
+        return true;
       }
       
-      // 2) Si NO hay sesión premium válida → ir a la pantalla de claves
-      if (!sesionPremiumValidaParaUsuarioActual()) {
-        redirigir('clave_ciclo_premium_jarvaz.html');
-        return;
-      }
+      // ✅ VERIFICACIÓN INMEDIATA (antes de cualquier renderizado)
+      if (!verificarYActuar()) return;
       
-      // 3) Todo válido: mostrar dashboard y bloquear botón Atrás
-      try { document.documentElement.style.visibility = 'visible'; } catch (e) {}
-      bloquearBotonAtras();
-      
-      // 4) Restauración desde caché (botón ◯ o <)
+      // ✅ Protección al restaurar desde caché (botón ◯ o <)
       window.addEventListener('pageshow', function (e) {
-        if (e.persisted) {
-          if (sesionPrincipalInvalida()) redirigir('inicio.html');
-          else if (!sesionPremiumValidaParaUsuarioActual()) redirigir('clave_ciclo_premium_jarvaz.html');
-          else { 
-            try { document.documentElement.style.visibility = 'visible'; } catch (e) {} 
-            bloquearBotonAtras();
-          }
-        }
+        verificarYActuar();
       });
       
-      // 5) Volver del botón ◯
+      // ✅ Protección al volver del botón ◯
       document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) {
-          if (sesionPrincipalInvalida()) redirigir('inicio.html');
-          else if (!sesionPremiumValidaParaUsuarioActual()) redirigir('clave_ciclo_premium_jarvaz.html');
-        }
+        if (!document.hidden) verificarYActuar();
       });
       
-      // 6) Sincronización entre pestañas
+      // ✅ Sincronización entre pestañas
       window.addEventListener('storage', function (e) {
         if (e.key === 'jarvaz_sesion' && !e.newValue) redirigir('inicio.html');
         if (e.key === 'jarvaz_premium_sesion' && !e.newValue) redirigir('clave_ciclo_premium_jarvaz.html');
@@ -108,6 +91,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 🔒 BLOQUEO POR CSS: Ocultar la página por defecto hasta que JS confirme sesión válida */
+        html {
+            visibility: hidden;
+            opacity: 0;
+        }
+
         :root {
             --primary-wine: #A52238;
             --dark-wine: #6B1420;
@@ -1177,17 +1166,16 @@
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const menuToggleBtn = document.getElementById('menuToggleBtn');
 
-        // ✅ Volver a la pantalla de claves (paso lógico previo)
+        // ✅ Volver a la pantalla de claves usando replace()
         function volverAlClave() {
             window.location.replace('clave_ciclo_premium_jarvaz.html');
         }
 
-        // ✅ Cerrar sesión del Ciclo Premium: borra premium y regresa a la pantalla de claves
+        // ✅ CERRAR SESIÓN CORREGIDO: Ahora regresa a clave_ciclo_premium_jarvaz.html
         function cerrarSesionPremium() {
             if (confirm('¿Deseas salir del Ciclo Premium?')) {
                 localStorage.removeItem('jarvaz_premium_sesion');
-                // ✅ CORREGIDO: Ahora regresa a la pantalla de claves, no al login general
-                window.location.replace('clave_ciclo_premium_jarvaz.html');
+                window.location.replace('clave_ciclo_premium_jarvaz.html');  // ✅ Corregido
             }
         }
 
@@ -1396,7 +1384,6 @@
             }
         }
 
-        // ✅ INICIALIZACIÓN
         window.addEventListener('DOMContentLoaded', () => {
             mostrarDashboard();
             setupEventListeners();
