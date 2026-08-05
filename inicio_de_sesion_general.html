@@ -1,6 +1,37 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - Debe ir PRIMERO, antes de cualquier cosa -->
+    <script>
+    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - inicio_de_sesion_general.html */
+    (function () {
+      function sesionInvalida() {
+        try {
+          var s = localStorage.getItem('jarvaz_sesion');
+          if (!s) return true;
+          var u = JSON.parse(s);
+          if (!u) return true;
+          if (u.isGuest) return false;        // permite Modo Invitado
+          return !u.id || !u.tipo;            // sesión corrupta
+        } catch (e) { return true; }
+      }
+      function volverInicio() {
+        // Oculta la pantalla ANTES de que se pinte (cero parpadeo)
+        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+        // replace() = no deja rastro en el historial
+        window.location.replace('inicio.html');
+      }
+      // 1) Carga normal: verifica ANTES de renderizar
+      if (sesionInvalida()) volverInicio();
+      // 2) Botón atrás "<" o reabrir app (restauración desde caché del navegador)
+      window.addEventListener('pageshow', function () { if (sesionInvalida()) volverInicio(); });
+      // 3) Volver del botón home "◯" (app en segundo plano)
+      document.addEventListener('visibilitychange', function () { if (!document.hidden && sesionInvalida()) volverInicio(); });
+      // 4) Sincronización entre pestañas: si cierran sesión en otra pestaña
+      window.addEventListener('storage', function (e) { if (e.key === 'jarvaz_sesion' && !e.newValue) volverInicio(); });
+    })();
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JARVAZ - Academia Preuniversitaria</title>
@@ -189,7 +220,7 @@
 
         /* ===== PERFIL MÓVIL ===== */
         .mobile-profile {
-            display: none; /* Oculto por defecto en escritorio */
+            display: none;
             background: var(--white);
             border-radius: var(--card-radius);
             padding: 1.5rem;
@@ -1231,14 +1262,14 @@
         @media (min-width: 1025px) {
             body {
                 height: 100vh;
-                overflow: hidden; /* Evita el scroll general de toda la página */
+                overflow: hidden;
             }
 
             .main-container {
-                height: calc(100vh - 80px); /* Altura total menos el header fijo */
+                height: calc(100vh - 80px);
                 margin-top: 80px;
                 margin-bottom: 0;
-                padding: 0 1rem 20px 1rem; /* Espacio inferior para que no se corte el contenido */
+                padding: 0 1rem 20px 1rem;
                 display: grid;
                 grid-template-columns: 280px 1fr 280px;
                 gap: 1.5rem;
@@ -1247,19 +1278,15 @@
 
             .sidebar, .feed {
                 height: 100%;
-                overflow-y: auto; /* Permite scroll independiente en cada columna */
-                overscroll-behavior-y: contain; /* ✅ EVITA EL REBOTE Y QUE SIGA SUBIENDO MÁS DE LA CUENTA */
-                
-                /* Ocultar barra de scroll en Firefox */
-                scrollbar-width: none; 
-                /* Ocultar barra de scroll en IE/Edge antiguo */
-                -ms-overflow-style: none; 
+                overflow-y: auto;
+                overscroll-behavior-y: contain;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
             }
 
-            /* Ocultar barra de scroll en Chrome, Safari y Edge moderno */
             .sidebar::-webkit-scrollbar, 
             .feed::-webkit-scrollbar {
-                display: none; 
+                display: none;
             }
         }
 
@@ -1350,7 +1377,7 @@
             }
 
             .mobile-profile {
-                display: flex; /* ✅ Solo visible en móvil */
+                display: flex;
                 padding: 1.2rem;
                 margin: 0 0 1.5rem 0;
                 width: 100%;
@@ -2048,17 +2075,14 @@
 
         // ===== EFECTO CHISPAS DORADAS Y REDIRECCIÓN =====
         function irAPremium(event) {
-            event.preventDefault(); // Evita la navegación inmediata
+            event.preventDefault();
             
-            // Obtener coordenadas del clic o del centro del botón
             const rect = event.currentTarget.getBoundingClientRect();
             const x = rect.left + rect.width / 2;
             const y = rect.top + rect.height / 2;
             
-            // Generar chispas
             crearChispasDoradas(x, y);
             
-            // Redirigir después de que se vea la animación (600ms)
             setTimeout(() => {
                 window.location.href = 'ciclo_premium_jarvaz.html';
             }, 600);
@@ -2070,7 +2094,6 @@
                 const chispa = document.createElement('div');
                 chispa.classList.add('chispa-dorada');
                 
-                // Dirección y distancia aleatoria
                 const angle = Math.random() * Math.PI * 2;
                 const velocity = 50 + Math.random() * 100;
                 const tx = Math.cos(angle) * velocity;
@@ -2083,7 +2106,6 @@
                 
                 document.body.appendChild(chispa);
                 
-                // Eliminar del DOM después de la animación
                 setTimeout(() => {
                     chispa.remove();
                 }, 600);
@@ -2215,12 +2237,13 @@
             showNotification('Perfil en construcción', 'info');
         }
 
+        // ✅ CIERRE DE SESIÓN MEJORADO: usa replace() para no dejar rastro en el historial
         function logout() {
             if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
                 localStorage.removeItem('jarvaz_sesion');
                 showNotification('Sesión cerrada correctamente', 'info');
                 setTimeout(() => {
-                    window.location.href = 'inicio.html';
+                    window.location.replace('inicio.html');  // ✅ REEMPLAZA, no agrega al historial
                 }, 1500);
             }
         }
