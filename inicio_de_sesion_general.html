@@ -2036,7 +2036,6 @@
             if (el) el.style.display = 'flex';
         }
 
-        // ✅ CORREGIDO: Ahora apunta a la pantalla de claves (login) del Ciclo Premium
         function irAPremium(event) {
             event.preventDefault();
             
@@ -2047,7 +2046,7 @@
             crearChispasDoradas(x, y);
             
             setTimeout(() => {
-                window.location.href = 'clave_ciclo_premium_jarvaz.html';  // ✅ CORREGIDO
+                window.location.href = 'clave_ciclo_premium_jarvaz.html';
             }, 600);
         }
 
@@ -2198,10 +2197,17 @@
             showNotification('Perfil en construcción', 'info');
         }
 
+        // ✅ CIERRE DE SESIÓN CORREGIDO:
+        // - Solo borra jarvaz_sesion (sesión principal)
+        // - NO borra jarvaz_premium_sesion (sesión premium)
+        // - La sesión premium se mantiene persistente para el mismo usuario
+        // - La seguridad se garantiza porque ciclo_premium_jarvaz.html
+        //   valida que la sesión premium coincida con el usuario actual
         function logout() {
             if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
                 localStorage.removeItem('jarvaz_sesion');
-                localStorage.removeItem('jarvaz_premium_sesion'); // ✅ También limpiar premium si existe
+                // ✅ ELIMINADO: localStorage.removeItem('jarvaz_premium_sesion');
+                // La sesión premium persiste para el mismo usuario
                 showNotification('Sesión cerrada correctamente', 'info');
                 setTimeout(() => {
                     window.location.replace('inicio.html');
