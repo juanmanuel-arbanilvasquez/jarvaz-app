@@ -1,85 +1,197 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - MISMO PATRÓN QUE inicio_de_sesion_general.html -->
+    <!-- ✅ GUARDIÁN INTELIGENTE JARVAZ v5.2 - Distingue Inactivo vs Eliminado -->
     <script>
-    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html */
+    /* 🛡️ GUARDIÁN INTELIGENTE - ciclo_premium_jarvaz.html */
     (function () {
-      function sesionInvalida() {
-        try {
-          var s = localStorage.getItem('jarvaz_sesion');
-          if (!s) return true;
-          var u = JSON.parse(s);
-          if (!u) return true;
-          if (u.isGuest) return true;
-          return !u.id && !u.nombres && !u.Nombres;
-        } catch (e) { return true; }
-      }
+      const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
       
-      function sesionPremiumInvalida() {
-        try {
-          var sp = localStorage.getItem('jarvaz_sesion');
-          var sPrem = localStorage.getItem('jarvaz_premium_sesion');
-          if (!sp || !sPrem) return true;
-          
-          var u = JSON.parse(sp);
-          var p = JSON.parse(sPrem);
-          
-          var idU = String(u.id || u.ID || '').trim();
-          var emailU = String(u.email || u.Email || '').toLowerCase().trim();
-          var idP = String(p.ID || p.id || '').trim();
-          var emailP = String(p.Email || p.email || '').toLowerCase().trim();
-          
-          var coincideID = idU && idP && idU === idP;
-          var coincideEmail = emailU && emailP && emailU === emailP;
-          
-          return !(coincideID || coincideEmail);
-        } catch (e) { return true; }
-      }
-      
-      function redirigirInicio() {
-        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+      // ─── FUNCIONES DE REDIRECCIÓN ───
+      function irAInicio() {
+        try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
+        localStorage.removeItem('jarvaz_sesion');
+        localStorage.removeItem('jarvaz_premium_sesion');
+        sessionStorage.clear();
+        try { history.replaceState({page:'inicio'}, '', 'inicio.html'); } catch(e){}
         window.location.replace('inicio.html');
       }
       
-      function redirigirClave() {
-        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+      function irAClave() {
+        try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
+        localStorage.removeItem('jarvaz_premium_sesion');
+        // NO borramos jarvaz_sesion - el usuario sigue logueado en JARVAZ
+        try { history.replaceState({page:'clave'}, '', 'clave_ciclo_premium_jarvaz.html'); } catch(e){}
         window.location.replace('clave_ciclo_premium_jarvaz.html');
       }
       
-      function verificarYActuar() {
-        if (sesionInvalida()) {
-          redirigirInicio();
-          return;
-        }
-        if (sesionPremiumInvalida()) {
-          redirigirClave();
-          return;
-        }
-        // Sesión válida: mostrar página
+      // ─── VALIDACIÓN LOCAL INSTANTÁNEA ───
+      function getSesionPrincipal() {
         try {
-          document.documentElement.style.visibility = 'visible';
-          document.documentElement.style.opacity = '1';
-        } catch (e) {}
+          var s = localStorage.getItem('jarvaz_sesion');
+          if (!s) return null;
+          var u = JSON.parse(s);
+          if (!u || u.isGuest) return null;
+          if (!u.id && !u.ID) return null;
+          return u;
+        } catch(e) { return null; }
       }
       
-      // 1) Verificación inmediata al cargar
-      verificarYActuar();
+      function getSesionPremium() {
+        try {
+          var s = localStorage.getItem('jarvaz_premium_sesion');
+          if (!s) return null;
+          return JSON.parse(s);
+        } catch(e) { return null; }
+      }
       
-      // 2) Protección al restaurar desde caché (botón ◯ o <)
-      window.addEventListener('pageshow', function (e) {
-        verificarYActuar();
+      // Verificar localmente antes de cualquier llamada remota
+      var userPrinc = getSesionPrincipal();
+      var userPrem = getSesionPremium();
+      
+      if (!userPrinc) { irAInicio(); return; }
+      if (!userPrem) { irAClave(); return; }
+      
+      // Validar que la sesión premium pertenezca al usuario principal actual
+      var idPrinc = String(userPrinc.id || userPrinc.ID || '').trim();
+      var emailPrinc = String(userPrinc.email || userPrinc.Email || '').toLowerCase().trim();
+      var idPrem = String(userPrem.ID || userPrem.id || '').trim();
+      var emailPrem = String(userPrem.Email || userPrem.email || '').toLowerCase().trim();
+      
+      var coincideID = idPrinc && idPrem && idPrinc === idPrem;
+      var coincideEmail = emailPrinc && emailPrem && emailPrinc === emailPrem;
+      
+      if (!coincideID && !coincideEmail) { irAClave(); return; }
+      
+      // ─── VALIDACIÓN REMOTA INTELIGENTE ───
+      function validarRemotoInteligente(uid, emailU) {
+        if (!uid && !emailU) return;
+        try {
+          var cbName = '_gi_' + Date.now();
+          var script = document.createElement('script');
+          var timer = setTimeout(function(){ cleanup(); }, 5000);
+          
+          window[cbName] = function(data) {
+            cleanup();
+            
+            // CASO A: No existe o error → Expulsar a inicio
+            if (!data || data.status === 'error' || data.activo === false) {
+              irAInicio();
+              return;
+            }
+            
+            // CASO B: Usuario ACTIVO → Comparar IDs para detectar re-registro
+            if (data.activo === true) {
+              var idEnBD = String(data.idActual || '').trim();
+              
+              // ✅ MISMO ID = Cuenta reactivada (Inactivo→Activo)
+              // La sesión premium sigue siendo válida → Permitir acceso directo
+              if (idPrinc && idEnBD && idPrinc === idEnBD) {
+                // Todo OK, mostrar página
+                try {
+                  document.documentElement.style.visibility = 'visible';
+                  document.documentElement.style.opacity = '1';
+                } catch(e){}
+                return;
+              }
+              
+              // ❌ DIFERENTE ID = Cuenta nueva tras Eliminación
+              // La sesión premium ya no es válida → Pedir clave nuevamente
+              if (idPrinc && idEnBD && idPrinc !== idEnBD) {
+                console.warn('⚠️ ID cambió en BD. Cuenta recreada tras eliminación.');
+                irAClave();
+                return;
+              }
+              
+              // Fallback: si no se pudo comparar IDs, permitir acceso
+              try {
+                document.documentElement.style.visibility = 'visible';
+                document.documentElement.style.opacity = '1';
+              } catch(e){}
+            }
+          };
+          
+          function cleanup() {
+            clearTimeout(timer);
+            try { delete window[cbName]; } catch(e){}
+            if (script.parentNode) script.parentNode.removeChild(script);
+          }
+          
+          var params = 'action=verificarUsuarioActivo&callback=' + cbName;
+          if (uid) params += '&idUsuario=' + encodeURIComponent(uid);
+          if (emailU) params += '&emailUsuario=' + encodeURIComponent(emailU);
+          
+          script.src = API_URL + '?' + params;
+          script.onerror = function(){ 
+            cleanup(); 
+            // Si falla red, NO expulsar - mostrar página normalmente
+            try {
+              document.documentElement.style.visibility = 'visible';
+              document.documentElement.style.opacity = '1';
+            } catch(e){}
+          };
+          document.head.appendChild(script);
+        } catch(e) {
+          // En caso de error JS, mostrar página
+          try {
+            document.documentElement.style.visibility = 'visible';
+            document.documentElement.style.opacity = '1';
+          } catch(ex){}
+        }
+      }
+      
+      // Ejecutar validación remota inteligente al cargar
+      validarRemotoInteligente(idPrinc, emailPrinc);
+      
+      // ─── LISTENERS DE SEGURIDAD ───
+      
+      // Re-validar al volver desde segundo plano
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          var u = getSesionPrincipal();
+          if (!u) { irAInicio(); return; }
+          var p = getSesionPremium();
+          if (!p) { irAClave(); return; }
+          validarRemotoInteligente(
+            String(u.id || u.ID || '').trim(),
+            String(u.email || u.Email || '').toLowerCase().trim()
+          );
+        }
       });
       
-      // 3) Protección al volver del botón ◯
-      document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) verificarYActuar();
+      // Re-validar al restaurar desde caché
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+          var u = getSesionPrincipal();
+          if (!u) { irAInicio(); return; }
+          var p = getSesionPremium();
+          if (!p) { irAClave(); return; }
+          validarRemotoInteligente(
+            String(u.id || u.ID || '').trim(),
+            String(u.email || u.Email || '').toLowerCase().trim()
+          );
+        }
       });
       
-      // 4) Sincronización entre pestañas
-      window.addEventListener('storage', function (e) {
-        if (e.key === 'jarvaz_sesion' && !e.newValue) redirigirInicio();
-        if (e.key === 'jarvaz_premium_sesion' && !e.newValue) redirigirClave();
+      // Detectar cierre en otra pestaña
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'jarvaz_sesion' && !e.newValue) { irAInicio(); }
+        if (e.key === 'jarvaz_premium_sesion' && !e.newValue) { irAClave(); }
+      });
+      
+      // Anti-retroceso
+      try {
+        history.replaceState({page:'premium_dash'}, '', window.location.href);
+        history.pushState({page:'premium_dash'}, '', window.location.href);
+      } catch(e){}
+      
+      window.addEventListener('popstate', function(e) {
+        if (!e.state || e.state.page !== 'premium_dash') {
+          history.go(1);
+          setTimeout(function(){ 
+            try { history.replaceState({page:'premium_dash'}, '', window.location.href); } catch(ex){} 
+          }, 50);
+        }
       });
     })();
     </script>
@@ -93,7 +205,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 🔒 BLOQUEO POR CSS: Ocultar la página por defecto */
+        /* 🔒 BLOQUEO POR CSS: Ocultar la página por defecto hasta validación */
         html {
             visibility: hidden;
             opacity: 0;
@@ -1181,86 +1293,6 @@
             }
         }
 
-        // ✅ FUNCIÓN PARA LLAMAR A LA API
-        function llamarAPI(params) {
-            return new Promise((resolve, reject) => {
-                const cbName = 'jarvaz_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-                const script = document.createElement('script');
-                const timer = setTimeout(() => { cleanup(); reject(new Error('Tiempo de espera agotado.')); }, 15000);
-                function cleanup() {
-                    clearTimeout(timer);
-                    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
-                    if (script.parentNode) script.parentNode.removeChild(script);
-                }
-                window[cbName] = function (data) { cleanup(); resolve(data); };
-                params.callback = cbName;
-                const qs = Object.keys(params).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k] == null ? '' : params[k])).join('&');
-                script.src = API_URL + '?' + qs;
-                script.onerror = function () { cleanup(); reject(new Error('Error de conexión.')); };
-                document.head.appendChild(script);
-            });
-        }
-
-        // ✅ VERIFICACIÓN REMOTA MEJORADA: Detecta usuarios eliminados Y cuentas nuevas
-        async function verificarUsuarioActivoRemoto() {
-            try {
-                const sesionPremium = localStorage.getItem('jarvaz_premium_sesion');
-                const sesionPrincipal = localStorage.getItem('jarvaz_sesion');
-                
-                if (!sesionPremium || !sesionPrincipal) return;
-                
-                const userPrem = JSON.parse(sesionPremium);
-                const userPrinc = JSON.parse(sesionPrincipal);
-                
-                const idGuardado = String(userPrem.ID || userPrem.id || userPrinc.id || userPrinc.ID || '').trim();
-                const emailGuardado = String(userPrem.Email || userPrem.email || userPrinc.email || userPrinc.Email || '').toLowerCase().trim();
-                
-                if (!idGuardado && !emailGuardado) return;
-                
-                const res = await llamarAPI({ 
-                    action: 'verificarUsuarioActivo', 
-                    idUsuario: idGuardado,
-                    emailUsuario: emailGuardado
-                });
-                
-                // Caso 1: Usuario eliminado de la BD o inactivo
-                if (res.status === 'error' || res.activo === false) {
-                    console.warn('⚠️ Usuario eliminado o inactivo');
-                    localStorage.removeItem('jarvaz_premium_sesion');
-                    localStorage.removeItem('jarvaz_sesion');
-                    alert('Tu cuenta ha sido desactivada. Contacta al administrador.');
-                    window.location.replace('inicio.html');
-                    return;
-                }
-                
-                // Caso 2: ✅ SEGURIDAD CRÍTICA - Detectar cuenta nueva con mismo email
-                if (res.activo === true) {
-                    const idEnBD = String(res.idActual || '').trim();
-                    const emailEnBD = String(res.emailActual || '').toLowerCase().trim();
-                    
-                    // Si el ID guardado NO coincide con el de la BD (cuenta nueva)
-                    if (idGuardado && idEnBD && idGuardado !== idEnBD) {
-                        console.warn('⚠️ ID cambió. Es una cuenta nueva. Cerrando sesión premium.');
-                        localStorage.removeItem('jarvaz_premium_sesion');
-                        alert('Has creado una cuenta nueva. Debes ingresar tu ID + Clave de Acceso Premium nuevamente.');
-                        window.location.replace('clave_ciclo_premium_jarvaz.html');
-                        return;
-                    }
-                    
-                    // Si el email guardado NO coincide con el de la BD (cuenta distinta)
-                    if (emailGuardado && emailEnBD && emailGuardado !== emailEnBD) {
-                        console.warn('⚠️ Email cambió. Sesión premium inválida.');
-                        localStorage.removeItem('jarvaz_premium_sesion');
-                        window.location.replace('clave_ciclo_premium_jarvaz.html');
-                        return;
-                    }
-                }
-            } catch (err) {
-                console.error('Error verificando usuario activo:', err);
-                // Si falla la conexión, NO cerrar sesión (podría ser temporal)
-            }
-        }
-
         function setupEventListeners() {
             if (menuToggleBtn) {
                 menuToggleBtn.addEventListener('click', function(e) {
@@ -1466,21 +1498,10 @@
             }
         }
 
-        // ✅ INICIALIZACIÓN CON VERIFICACIÓN REMOTA
-        window.addEventListener('DOMContentLoaded', async () => {
+        // ✅ INICIALIZACIÓN: El guardián ya validó en el <head>, solo renderizar
+        window.addEventListener('DOMContentLoaded', () => {
             mostrarDashboard();
             setupEventListeners();
-            
-            // Verificar al cargar + cada 5 minutos + al volver a la app
-            await verificarUsuarioActivoRemoto();
-            setInterval(verificarUsuarioActivoRemoto, 300000);
-        });
-
-        // ✅ Verificar cuando la página vuelve a ser visible (usuario regresa de otra app)
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                verificarUsuarioActivoRemoto();
-            }
         });
     </script>
 </body>
