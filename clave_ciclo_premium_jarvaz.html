@@ -1,42 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - Debe ir PRIMERO, antes de cualquier cosa -->
+    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.2 - Validación en Tiempo Real -->
     <script>
-    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - ciclo_premium_jarvaz.html */
+    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO - clave_ciclo_premium_jarvaz.html */
     (function () {
-      function sesionPrincipalInvalida() {
-        try {
-          var s = localStorage.getItem('jarvaz_sesion');
-          if (!s) return true;
-          var u = JSON.parse(s);
-          if (!u) return true;
-          if (u.isGuest) return true;
-          return !u.id && !u.nombres && !u.Nombres;
-        } catch (e) { return true; }
-      }
+      const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
       
-      function volverInicio() {
-        try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+      // Función maestra de expulsión silenciosa
+      function expulsarAlInicio() {
+        try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
+        localStorage.removeItem('jarvaz_sesion');
+        localStorage.removeItem('jarvaz_premium_sesion');
+        sessionStorage.clear();
+        try { history.replaceState({page:'inicio'}, '', 'inicio.html'); } catch(e){}
         window.location.replace('inicio.html');
       }
       
-      // 1) Carga normal: verifica ANTES de renderizar
-      if (sesionPrincipalInvalida()) volverInicio();
+      // 1. Validación local inmediata (antes de cualquier render)
+      function getSesionLocal() {
+        try {
+          var s = localStorage.getItem('jarvaz_sesion');
+          if (!s) return null;
+          var u = JSON.parse(s);
+          if (!u || u.isGuest) return null; // En premium NO permitimos invitados
+          if (!u.id && !u.ID) return null;
+          return u;
+        } catch(e) { return null; }
+      }
       
-      // 2) Botón atrás "<" o reabrir app (restauración desde caché del navegador)
-      window.addEventListener('pageshow', function () { 
-        if (sesionPrincipalInvalida()) volverInicio(); 
+      var user = getSesionLocal();
+      if (!user) {
+        expulsarAlInicio();
+        return; // Detener ejecución inmediatamente
+      }
+      
+      // 2. Validación remota contra Google Sheet (Heartbeat)
+      function validarRemoto(uid) {
+        if (!uid) return;
+        try {
+          var cbName = '_hb_' + Date.now();
+          var script = document.createElement('script');
+          var timer = setTimeout(function(){ cleanup(); }, 5000);
+          
+          window[cbName] = function(data) {
+            cleanup();
+            // Si NO existe o NO está activo → Expulsar
+            if (!data || data.existe === false || data.activo !== 'SI') {
+              expulsarAlInicio();
+            }
+          };
+          
+          function cleanup() {
+            clearTimeout(timer);
+            try { delete window[cbName]; } catch(e){}
+            if (script.parentNode) script.parentNode.removeChild(script);
+          }
+          
+          script.src = API_URL + '?action=verificarExistencia&id=' + encodeURIComponent(uid) + '&callback=' + cbName;
+          script.onerror = function(){ cleanup(); }; // Si falla red, NO expulsar
+          document.head.appendChild(script);
+        } catch(e) {}
+      }
+      
+      // Ejecutar validación remota al cargar
+      var userId = user.id || user.ID || '';
+      if (userId) {
+        validarRemoto(userId);
+      }
+      
+      // 3. Re-validar al volver desde segundo plano (multitarea / botón home)
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          var u = getSesionLocal();
+          if (!u) {
+            expulsarAlInicio();
+          } else {
+            validarRemoto(u.id || u.ID || '');
+          }
+        }
       });
       
-      // 3) Volver del botón home "◯" (app en segundo plano)
-      document.addEventListener('visibilitychange', function () { 
-        if (!document.hidden && sesionPrincipalInvalida()) volverInicio(); 
+      // 4. Re-validar al restaurar desde caché (botón atrás del navegador)
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+          var u = getSesionLocal();
+          if (!u) {
+            expulsarAlInicio();
+          } else {
+            validarRemoto(u.id || u.ID || '');
+          }
+        }
       });
       
-      // 4) Sincronización entre pestañas: si cierran sesión en otra pestaña
-      window.addEventListener('storage', function (e) { 
-        if (e.key === 'jarvaz_sesion' && !e.newValue) volverInicio(); 
+      // 5. Detectar si otra pestaña cerró sesión
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'jarvaz_sesion' && !e.newValue) {
+          expulsarAlInicio();
+        }
+      });
+      
+      // 6. Anti-retroceso: interceptar botón Atrás
+      try {
+        history.replaceState({page:'premium'}, '', window.location.href);
+        history.pushState({page:'premium'}, '', window.location.href);
+      } catch(e){}
+      
+      window.addEventListener('popstate', function(e) {
+        if (!e.state || e.state.page !== 'premium') {
+          history.go(1);
+          setTimeout(function(){ 
+            try { history.replaceState({page:'premium'}, '', window.location.href); } catch(ex){} 
+          }, 50);
+        }
       });
     })();
     </script>
