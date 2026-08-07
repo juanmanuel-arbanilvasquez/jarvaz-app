@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.3 - Panel Profesor CORREGIDO -->
+    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.4 - Panel Profesor (Inactivo vs Eliminado) -->
     <script>
-    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.3 - inicio_de_sesion_profesor.html */
+    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.4 - inicio_de_sesion_profesor.html */
     (function () {
       const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
+      const WHATSAPP_ADMIN = '51973441252';
       
+      // Expulsión TOTAL: borra sesión, va a inicio.html
       function expulsarAlInicio() {
         try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
         localStorage.removeItem('jarvaz_sesion');
@@ -15,7 +17,21 @@
         window.location.replace('inicio.html');
       }
       
-      // ✅ CORREGIDO: Extrae UID de TODOS los campos posibles
+      // Bloqueo por INACTIVO: Muestra botón WhatsApp, NO borra sesión
+      function bloquearPorInactivo() {
+        try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
+        // NO borramos jarvaz_sesion → cuando admin reactive, ingresa directo
+        sessionStorage.clear();
+        try { history.replaceState({page:'inactivo'}, '', 'inicio.html'); } catch(e){}
+        
+        // Construir mensaje WhatsApp
+        var msg = 'Hola Admin JARVAZ, mi cuenta de profesor fue desactivada. Solicito información sobre el motivo y posible reactivación.';
+        var waUrl = 'https://wa.me/' + WHATSAPP_ADMIN + '?text=' + encodeURIComponent(msg);
+        
+        // Redirigir a inicio.html con parámetro especial para mostrar botón WA
+        window.location.replace('inicio.html?profesor_inactivo=1&wa_url=' + encodeURIComponent(waUrl));
+      }
+      
       function getSesionLocal() {
         try {
           var s = localStorage.getItem('jarvaz_sesion');
@@ -24,7 +40,6 @@
           if (!u || u.isGuest) return null;
           var tipo = String(u.tipo || u.categoria || '').toLowerCase();
           if (tipo !== 'profesor') return null;
-          // Buscar ID/código en todos los campos posibles
           var uid = String(u.codigoProfesor || u.Codigo || u.codigo || u.id || u.ID || '').trim();
           if (!uid) return null;
           return { data: u, uid: uid };
@@ -46,20 +61,23 @@
           
           window[cbName] = function(data) {
             cleanup();
+            console.log('🔍 Guardián Profesor v5.4:', JSON.stringify(data));
             
-            console.log('🔍 Guardián Profesor respuesta:', JSON.stringify(data));
+            // ✅ CASO 1: PROFESOR INACTIVO → Botón WhatsApp, NO borrar sesión
+            if (data && data.code === 'PROFESOR_INACTIVO') {
+              console.warn('⚠️ Profesor INACTIVO. Mostrando botón WhatsApp.');
+              bloquearPorInactivo();
+              return;
+            }
             
-            // CASO 1: No existe o no está activo → Expulsar
-            if (!data || data.existe === false || data.activo !== 'SI') {
-              console.warn('⛔ Profesor expulsado.', 
-                !data ? 'Sin respuesta' : 
-                data.existe === false ? 'No encontrado en BD' : 
-                'Estado: ' + (data.estadoActual || 'Desconocido'));
+            // ✅ CASO 2: ELIMINADO o FILA BORRADA → Expulsión total
+            if (!data || data.existe === false) {
+              console.warn('⛔ Profesor eliminado o fila borrada. Expulsión total.');
               expulsarAlInicio();
               return;
             }
             
-            // CASO 2: Activo y confirmado como profesor → Mostrar página
+            // ✅ CASO 3: ACTIVO y tipo profesor → Mostrar página
             if (data.activo === 'SI' && data.tipo === 'profesor') {
               try {
                 document.documentElement.style.visibility = 'visible';
@@ -68,10 +86,17 @@
               return;
             }
             
-            // CASO 3: Activo pero tipo incorrecto → Expulsar
+            // ✅ CASO 4: Activo pero tipo incorrecto → Expulsar
             if (data.activo === 'SI' && data.tipo !== 'profesor') {
               console.warn('⛔ Tipo mismatch. BD dice:', data.tipo);
               expulsarAlInicio();
+              return;
+            }
+            
+            // ✅ CASO 5: Existe pero no activo y sin código especial → Inactivo genérico
+            if (data.existe === true && data.activo !== 'SI') {
+              console.warn('⚠️ Profesor no activo (genérico). Botón WhatsApp.');
+              bloquearPorInactivo();
               return;
             }
             
@@ -240,7 +265,6 @@
         }
         .post-input:focus { outline: none; border-color: var(--primary); background: var(--white); }
         
-        /* Estilo para el input de archivo */
         .file-input-label {
             display: flex; align-items: center; gap: 0.8rem; padding: 1rem;
             border: 2px dashed var(--primary); border-radius: 10px;
@@ -555,7 +579,6 @@
                 const img = new Image();
                 img.src = event.target.result;
                 img.onload = function() {
-                    // Redimensionar para que quepa en Google Sheets (máx 800px de ancho)
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 800;
                     const scaleSize = MAX_WIDTH / img.width;
@@ -565,7 +588,6 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    // Comprimir a JPEG con calidad 0.7
                     selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     preview.src = selectedImageBase64;
                     preview.style.display = 'block';
@@ -653,8 +675,6 @@
 
             const titulo = esMovil ? document.getElementById('mPostTitle').value.trim() : document.getElementById('postTitle').value.trim();
             const contenido = esMovil ? document.getElementById('mPostContent').value.trim() : document.getElementById('postContent').value.trim();
-            
-            // Usar la imagen procesada en Base64
             const imagenURL = selectedImageBase64;
 
             if (!titulo || !contenido) {
@@ -678,13 +698,11 @@
                 if (response.status === 'success') {
                     showNotification('✅ ¡Publicación creada exitosamente!', 'success');
                     
-                    // Limpiar formularios
                     document.getElementById('postTitle').value = '';
                     document.getElementById('postContent').value = '';
                     document.getElementById('mPostTitle').value = '';
                     document.getElementById('mPostContent').value = '';
                     
-                    // Resetear imágenes
                     selectedImageBase64 = '';
                     document.getElementById('previewDesktop').style.display = 'none';
                     document.getElementById('previewMobile').style.display = 'none';
