@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.2 - Panel Profesor -->
+    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.3 - Panel Profesor CORREGIDO -->
     <script>
-    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO - inicio_de_sesion_profesor.html */
+    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.3 - inicio_de_sesion_profesor.html */
     (function () {
       const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
       
-      // Función maestra de expulsión silenciosa
       function expulsarAlInicio() {
         try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
         localStorage.removeItem('jarvaz_sesion');
@@ -16,47 +15,71 @@
         window.location.replace('inicio.html');
       }
       
-      // 1. Validación local inmediata (antes de cualquier render)
+      // ✅ CORREGIDO: Extrae UID de TODOS los campos posibles
       function getSesionLocal() {
         try {
           var s = localStorage.getItem('jarvaz_sesion');
           if (!s) return null;
           var u = JSON.parse(s);
           if (!u || u.isGuest) return null;
-          // Verificar que sea profesor
           var tipo = String(u.tipo || u.categoria || '').toLowerCase();
           if (tipo !== 'profesor') return null;
-          if (!u.id && !u.ID && !u.codigoProfesor && !u.Codigo) return null;
-          return u;
+          // Buscar ID/código en todos los campos posibles
+          var uid = String(u.codigoProfesor || u.Codigo || u.codigo || u.id || u.ID || '').trim();
+          if (!uid) return null;
+          return { data: u, uid: uid };
         } catch(e) { return null; }
       }
       
-      var user = getSesionLocal();
-      if (!user) {
+      var sesion = getSesionLocal();
+      if (!sesion) {
         expulsarAlInicio();
-        return; // Detener ejecución inmediatamente
+        return;
       }
       
-      // 2. Validación remota contra Google Sheet (Heartbeat)
       function validarRemoto(uid) {
-        if (!uid) return;
+        if (!uid) { expulsarAlInicio(); return; }
         try {
-          var cbName = '_hb_prof_' + Date.now();
+          var cbName = '_hb_prof_' + Date.now() + '_' + Math.floor(Math.random()*999999);
           var script = document.createElement('script');
-          var timer = setTimeout(function(){ cleanup(); }, 5000);
+          var timer = setTimeout(function(){ cleanup(); }, 6000);
           
           window[cbName] = function(data) {
             cleanup();
-            // Si NO existe o NO está activo → Expulsar
+            
+            console.log('🔍 Guardián Profesor respuesta:', JSON.stringify(data));
+            
+            // CASO 1: No existe o no está activo → Expulsar
             if (!data || data.existe === false || data.activo !== 'SI') {
+              console.warn('⛔ Profesor expulsado.', 
+                !data ? 'Sin respuesta' : 
+                data.existe === false ? 'No encontrado en BD' : 
+                'Estado: ' + (data.estadoActual || 'Desconocido'));
               expulsarAlInicio();
-            } else {
-              // Sesión válida: mostrar página
+              return;
+            }
+            
+            // CASO 2: Activo y confirmado como profesor → Mostrar página
+            if (data.activo === 'SI' && data.tipo === 'profesor') {
               try {
                 document.documentElement.style.visibility = 'visible';
                 document.documentElement.style.opacity = '1';
               } catch(e){}
+              return;
             }
+            
+            // CASO 3: Activo pero tipo incorrecto → Expulsar
+            if (data.activo === 'SI' && data.tipo !== 'profesor') {
+              console.warn('⛔ Tipo mismatch. BD dice:', data.tipo);
+              expulsarAlInicio();
+              return;
+            }
+            
+            // Fallback seguro
+            try {
+              document.documentElement.style.visibility = 'visible';
+              document.documentElement.style.opacity = '1';
+            } catch(e){}
           };
           
           function cleanup() {
@@ -68,7 +91,6 @@
           script.src = API_URL + '?action=verificarExistencia&id=' + encodeURIComponent(uid) + '&callback=' + cbName;
           script.onerror = function(){ 
             cleanup(); 
-            // Si falla red, NO expulsar - mostrar página
             try {
               document.documentElement.style.visibility = 'visible';
               document.documentElement.style.opacity = '1';
@@ -83,46 +105,35 @@
         }
       }
       
-      // Ejecutar validación remota al cargar
-      var userId = user.id || user.ID || user.codigoProfesor || user.Codigo || '';
-      if (userId) {
-        validarRemoto(userId);
-      } else {
-        expulsarAlInicio();
-      }
+      // Ejecutar al cargar
+      validarRemoto(sesion.uid);
       
-      // 3. Re-validar al volver desde segundo plano (multitarea / botón home)
+      // Re-validar al volver desde segundo plano
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
-          var u = getSesionLocal();
-          if (!u) {
-            expulsarAlInicio();
-          } else {
-            validarRemoto(u.id || u.ID || u.codigoProfesor || u.Codigo || '');
-          }
+          var s = getSesionLocal();
+          if (!s) { expulsarAlInicio(); }
+          else { validarRemoto(s.uid); }
         }
       });
       
-      // 4. Re-validar al restaurar desde caché (botón atrás del navegador)
+      // Re-validar al restaurar desde caché
       window.addEventListener('pageshow', function(e) {
         if (e.persisted) {
-          var u = getSesionLocal();
-          if (!u) {
-            expulsarAlInicio();
-          } else {
-            validarRemoto(u.id || u.ID || u.codigoProfesor || u.Codigo || '');
-          }
+          var s = getSesionLocal();
+          if (!s) { expulsarAlInicio(); }
+          else { validarRemoto(s.uid); }
         }
       });
       
-      // 5. Detectar si otra pestaña cerró sesión
+      // Detectar cierre en otra pestaña
       window.addEventListener('storage', function(e) {
         if (e.key === 'jarvaz_sesion' && !e.newValue) {
           expulsarAlInicio();
         }
       });
       
-      // 6. Anti-retroceso: interceptar botón Atrás
+      // Anti-retroceso
       try {
         history.replaceState({page:'profesor'}, '', window.location.href);
         history.pushState({page:'profesor'}, '', window.location.href);
