@@ -1,76 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ - inicio.html (refuerzo inicial) -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL -->
     <script>
-    /* 🛡️ PROTECCIÓN ANTI-RETROCESO JARVAZ - inicio.html */
+    /* 🛡️ GUARDIÁN DE SESIÓN JARVAZ - inicio.html */
     (function () {
-      function sesionValida() {
+      const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
+      
+      // Función maestra para destruir sesión y redirigir limpiamente
+      window.forzarCierreSesion = function(motivo) {
+        console.warn('🚫 Sesión terminada:', motivo);
+        localStorage.removeItem('jarvaz_sesion');
+        sessionStorage.clear();
+        try { history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href); } catch(e){}
+        // Recargar para limpiar estado visual y forzar re-login
+        window.location.replace(window.location.pathname + '?t=' + Date.now()); 
+      };
+
+      function sesionValidaLocal() {
         try {
           var s = localStorage.getItem('jarvaz_sesion');
           if (!s) return null;
           var u = JSON.parse(s);
-          if (!u) return null;
-          if (u.isGuest) return u;             // Invitado es válido
-          var tipo = String(u.tipo || u.categoria || '').toLowerCase();
-          if (!u.id && !u.nombres && !u.Nombres) return null;
+          if (!u || u.isGuest) return u; 
+          if (!u.id && !u.nombres) return null;
           return u;
         } catch (e) { return null; }
       }
       
-      function redirigir(user) {
-        var tipo = String(user.tipo || user.categoria || '').toLowerCase();
-        var destino = 'inicio_de_sesion_general.html';
-        if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
-        // replace() para no dejar rastro en el historial
-        window.location.replace(destino);
+      // Verifica contra la Base de Datos si el usuario aún existe
+      async function validarExistenciaRemota(user) {
+        if (!user || user.isGuest) return true; // Invitados siempre pasan
+        
+        try {
+          const cbName = 'hb_' + Date.now();
+          const script = document.createElement('script');
+          
+          return new Promise((resolve) => {
+            const timer = setTimeout(() => { cleanup(); resolve(true); }, 4000); // Timeout de seguridad
+            
+            window[cbName] = function(data) { 
+              cleanup(); 
+              // Si la API dice que no existe o está inactivo
+              if (data && (data.status === 'error' || data.existe === false || data.activo === 'NO')) {
+                resolve(false); 
+              } else {
+                resolve(true);
+              }
+            };
+            
+            function cleanup() {
+              clearTimeout(timer);
+              try { delete window[cbName]; } catch(e){}
+              if(script.parentNode) script.parentNode.removeChild(script);
+            }
+            
+            // Llamada ligera a la API para verificar existencia
+            script.src = `${API_URL}?action=verificarExistencia&id=${encodeURIComponent(user.id)}&callback=${cbName}`;
+            script.onerror = () => { cleanup(); resolve(true); }; // Si falla internet, no expulsar
+            document.head.appendChild(script);
+          });
+        } catch(e) { return true; }
+      }
+
+      async function ejecutarProteccion() {
+        var user = sesionValidaLocal();
+        
+        // 1. Si hay sesión, verificar si sigue existiendo en la Nube
+        if (user && !user.isGuest) {
+          const existe = await validarExistenciaRemota(user);
+          if (!existe) {
+            alert('⚠️ Tu cuenta ha sido desactivada o eliminada por el administrador.');
+            window.forzarCierreSesion('Usuario eliminado en BD');
+            return;
+          }
+          
+          // Si existe, redirigir a su panel
+          var tipo = String(user.tipo || user.categoria || '').toLowerCase();
+          var destino = 'inicio_de_sesion_general.html';
+          if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
+          window.location.replace(destino);
+          return;
+        }
+        
+        // 2. Protección Anti-Retroceso si NO hay sesión
+        try {
+          history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
+          history.pushState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
+        } catch (e) {}
       }
       
-      // 1) Si hay sesión válida, redirigir inmediatamente
-      var user = sesionValida();
-      if (user && !user.isGuest) {
-        redirigir(user);
-        return; // Detener ejecución
-      }
+      // Ejecutar al cargar
+      ejecutarProteccion();
       
-      // 2) Si NO hay sesión, preparar el bloqueo del botón Atrás
-      // Esto evita que si el usuario sale de la app y vuelve, el historial restaurado
-      // permita navegar hacia atrás a páginas internas ya protegidas
-      try {
-        // Limpiar el estado inicial
-        history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
-        // Agregar un estado adicional que será interceptado por popstate
-        history.pushState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
-      } catch (e) {}
-      
-      // 3) Listener de popstate (botón Atrás <)
+      // Listeners de seguridad
       window.addEventListener('popstate', function(e) {
         if (!e.state || e.state.page === 'inicio') {
           history.go(1);
-          setTimeout(function() {
-            try { history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href); } catch (ex) {}
-          }, 50);
+          setTimeout(() => { try { history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href); } catch(ex){} }, 50);
         }
       });
       
-      // 4) Restauración desde caché (cuando reabres la app con ◯ y luego presionas <)
-      window.addEventListener('pageshow', function(e) {
-        if (e.persisted) {
-          var u = sesionValida();
-          if (u && !u.isGuest) {
-            redirigir(u);
-          }
-        }
-      });
-      
-      // 5) Volver desde botón Home ◯
+      // Validar al volver desde segundo plano (Botón Home / Multitarea)
       document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-          var u = sesionValida();
-          if (u && !u.isGuest) {
-            redirigir(u);
-          }
-        }
+        if (!document.hidden) ejecutarProteccion();
+      });
+      
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) ejecutarProteccion();
       });
     })();
     </script>
@@ -574,74 +611,6 @@
   let googleUserActual = null;
   let formularioActivo = null;
 
-  // ✅ SOLUCIÓN COMPLETA: Función para manejar el historial y prevenir navegación hacia atrás
-  function inicializarProteccionHistorial() {
-    // Bandera para evitar duplicados si el script se ejecuta varias veces
-    if (window._jarvazProteccionActiva) return;
-    window._jarvazProteccionActiva = true;
-    
-    // Verificar si hay sesión activa
-    const sesion = localStorage.getItem('jarvaz_sesion');
-    let tieneSesion = false;
-    
-    if (sesion) {
-      try {
-        const user = JSON.parse(sesion);
-        tieneSesion = !!user && !user.isGuest;
-      } catch (e) {
-        localStorage.removeItem('jarvaz_sesion');
-      }
-    }
-    
-    // Si NO hay sesión, proteger contra navegación hacia atrás
-    if (!tieneSesion) {
-      // Limpiar cualquier estado previo del historial
-      try {
-        history.replaceState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
-        // Agregar un estado adicional para interceptar el botón Atrás
-        history.pushState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
-      } catch (e) {}
-      
-      // Interceptar el evento popstate (botón Atrás)
-      window.addEventListener('popstate', function(event) {
-        // Si no hay estado o el estado es de inicio, forzar a permanecer aquí
-        if (!event.state || (event.state && event.state.page === 'inicio')) {
-          // Prevenir navegación hacia atrás
-          history.go(1);
-          
-          // Como respaldo, volver a establecer el estado
-          setTimeout(() => {
-            try { history.replaceState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href); } catch (e) {}
-          }, 100);
-        }
-      });
-      
-      // Prevenir navegación hacia atrás con gestos en móviles
-      let touchStartX = 0;
-      let touchEndX = 0;
-      
-      document.addEventListener('touchstart', function(e) {
-        touchStartX = e.changedTouches[0].screenX;
-      }, { passive: true });
-      
-      document.addEventListener('touchend', function(e) {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-      }, { passive: true });
-      
-      function handleSwipe() {
-        const swipeThreshold = 50;
-        // Detectar swipe hacia la derecha (gesto de "atrás" en móviles)
-        if (touchEndX - touchStartX > swipeThreshold) {
-          // Si hay swipe de atrás, forzar a permanecer en inicio
-          if (history.state && history.state.page === 'inicio') {
-            history.go(1);
-          }
-        }
-      }
-    }
-  }
-
   function handleGoogleCredential(response) {
     try {
       const payload = decodeJwt(response.credential);
@@ -768,24 +737,6 @@
   }
   crearPolvoBrillante();
 
-  function verificarSesion() {
-    const sesion = localStorage.getItem('jarvaz_sesion');
-    if (sesion) {
-      try {
-        const user = JSON.parse(sesion);
-        const tipo = (user.tipo || user.categoria || '').toLowerCase();
-        
-        if (user.isGuest) return;
-        
-        let destino = 'inicio_de_sesion_general.html';
-        if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
-        window.location.replace(destino);
-      } catch (e) {
-        localStorage.removeItem('jarvaz_sesion');
-      }
-    }
-  }
-
   function mostrarSesionActiva(user) {
     const badge = document.getElementById('sessionBadge');
     const avatar = document.getElementById('sessionAvatar');
@@ -800,18 +751,16 @@
     badge.classList.add('active');
   }
 
-  // ✅ SOLUCIÓN: Función mejorada para cerrar sesión que limpia el historial
+  // ✅ CIERRE DE SESIÓN SEGURO CON LIMPIEZA DE HISTORIAL
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
-      localStorage.removeItem('jarvaz_sesion');
-      
-      // Limpiar completamente el historial antes de redirigir
-      try {
-        history.replaceState({ page: 'inicio', logout: true }, '', window.location.href);
-      } catch (e) {}
-      
-      // Redirigir a inicio.html reemplazando la entrada actual del historial
-      window.location.replace('inicio.html');
+      // Usamos la función global definida en el head
+      if (window.forzarCierreSesion) {
+        window.forzarCierreSesion('Logout manual');
+      } else {
+        localStorage.removeItem('jarvaz_sesion');
+        window.location.replace('inicio.html');
+      }
     }
   }
 
@@ -1166,50 +1115,11 @@
       window._loginPendiente = null;
     }
   };
-
+  
+  // Foco inicial
   window.addEventListener('DOMContentLoaded', () => { 
-    verificarSesion();
-    // ✅ SOLUCIÓN COMPLETA: Inicializar protección del historial al cargar la página
-    inicializarProteccionHistorial();
-    
     const loginInput = document.getElementById('login_contacto');
-    if (loginInput) {
-      setTimeout(() => {
-        loginInput.focus();
-      }, 100);
-    }
-  });
-  
-  // ✅ Refuerzo adicional: cuando la página se vuelve visible después de estar en background (botón ◯ Home)
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) {
-      // Cuando la página vuelve a ser visible, verificar el historial
-      const sesion = localStorage.getItem('jarvaz_sesion');
-      if (!sesion) {
-        // Si no hay sesión, asegurar que estamos en la página correcta
-        try {
-          history.replaceState({ page: 'inicio', timestamp: Date.now() }, '', window.location.href);
-        } catch (e) {}
-      } else {
-        // Si hay sesión válida, redirigir a la página correspondiente
-        try {
-          const user = JSON.parse(sesion);
-          if (user && !user.isGuest) {
-            const tipo = (user.tipo || user.categoria || '').toLowerCase();
-            let destino = 'inicio_de_sesion_general.html';
-            if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
-            window.location.replace(destino);
-          }
-        } catch (e) {}
-      }
-    }
-  });
-  
-  // ✅ Refuerzo adicional: si el navegador restaura esta página desde caché (al presionar < después de ◯)
-  window.addEventListener('pageshow', function(e) {
-    if (e.persisted) {
-      inicializarProteccionHistorial();
-    }
+    if (loginInput) setTimeout(() => loginInput.focus(), 500);
   });
 </script>
 </body>
