@@ -1,19 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.2 -->
     <script>
     /* 🛡️ GUARDIÁN DE SESIÓN JARVAZ - inicio.html */
     (function () {
       const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
       
-      // Función maestra para destruir sesión y redirigir limpiamente
       window.forzarCierreSesion = function(motivo) {
         console.warn('🚫 Sesión terminada:', motivo);
         localStorage.removeItem('jarvaz_sesion');
         sessionStorage.clear();
         try { history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href); } catch(e){}
-        // Recargar para limpiar estado visual y forzar re-login
         window.location.replace(window.location.pathname + '?t=' + Date.now()); 
       };
 
@@ -28,20 +26,18 @@
         } catch (e) { return null; }
       }
       
-      // Verifica contra la Base de Datos si el usuario aún existe
       async function validarExistenciaRemota(user) {
-        if (!user || user.isGuest) return true; // Invitados siempre pasan
+        if (!user || user.isGuest) return true;
         
         try {
           const cbName = 'hb_' + Date.now();
           const script = document.createElement('script');
           
           return new Promise((resolve) => {
-            const timer = setTimeout(() => { cleanup(); resolve(true); }, 4000); // Timeout de seguridad
+            const timer = setTimeout(() => { cleanup(); resolve(true); }, 4000);
             
             window[cbName] = function(data) { 
               cleanup(); 
-              // Si la API dice que no existe o está inactivo
               if (data && (data.status === 'error' || data.existe === false || data.activo === 'NO')) {
                 resolve(false); 
               } else {
@@ -55,9 +51,8 @@
               if(script.parentNode) script.parentNode.removeChild(script);
             }
             
-            // Llamada ligera a la API para verificar existencia
             script.src = `${API_URL}?action=verificarExistencia&id=${encodeURIComponent(user.id)}&callback=${cbName}`;
-            script.onerror = () => { cleanup(); resolve(true); }; // Si falla internet, no expulsar
+            script.onerror = () => { cleanup(); resolve(true); };
             document.head.appendChild(script);
           });
         } catch(e) { return true; }
@@ -66,16 +61,15 @@
       async function ejecutarProteccion() {
         var user = sesionValidaLocal();
         
-        // 1. Si hay sesión, verificar si sigue existiendo en la Nube
         if (user && !user.isGuest) {
           const existe = await validarExistenciaRemota(user);
           if (!existe) {
-            alert('⚠️ Tu cuenta ha sido desactivada o eliminada por el administrador.');
-            window.forzarCierreSesion('Usuario eliminado en BD');
+            // Mensaje diferenciado según contexto
+            alert('⚠️ Tu sesión ha finalizado porque tu cuenta fue desactivada o restaurada por el administrador. Por favor, inicia sesión nuevamente.');
+            window.forzarCierreSesion('Estado cambiado en BD');
             return;
           }
           
-          // Si existe, redirigir a su panel
           var tipo = String(user.tipo || user.categoria || '').toLowerCase();
           var destino = 'inicio_de_sesion_general.html';
           if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
@@ -83,17 +77,14 @@
           return;
         }
         
-        // 2. Protección Anti-Retroceso si NO hay sesión
         try {
           history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
           history.pushState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
         } catch (e) {}
       }
       
-      // Ejecutar al cargar
       ejecutarProteccion();
       
-      // Listeners de seguridad
       window.addEventListener('popstate', function(e) {
         if (!e.state || e.state.page === 'inicio') {
           history.go(1);
@@ -101,7 +92,6 @@
         }
       });
       
-      // Validar al volver desde segundo plano (Botón Home / Multitarea)
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden) ejecutarProteccion();
       });
@@ -202,6 +192,8 @@
       .alert-success { background:rgba(34,197,94,0.12); color:#86efac; border-color:#22c55e; }
       .alert-error { background:rgba(239,68,68,0.12); color:#fca5a5; border-color:#ef4444; }
       .alert-info { background:rgba(212,175,55,0.12); color:var(--oro-300); border-color:var(--oro-500); }
+      /* ✅ NUEVO: Alerta Warning para cuentas desactivadas */
+      .alert-warning { background:rgba(251,146,60,0.12); color:#fdba74; border-color:#fb923c; }
       
       .main-content { flex:1; display:flex; flex-direction:column; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--oro-500) transparent; }
       .main-content::-webkit-scrollbar { width:4px; }
@@ -237,72 +229,21 @@
         margin: 6px 0 10px;
         text-align: center;
       }
-      .google-auth-section p {
-        font-size: 0.72em;
-        color: #b0c4de;
-        margin-bottom: 8px;
-        line-height: 1.3;
-      }
-      .google-auth-section p i {
-        color: var(--oro-400);
-        margin-right: 4px;
-      }
-      .google-btn-wrapper {
-        display: flex;
-        justify-content: center;
-        min-height: 40px;
-      }
+      .google-auth-section p { font-size: 0.72em; color: #b0c4de; margin-bottom: 8px; line-height: 1.3; }
+      .google-auth-section p i { color: var(--oro-400); margin-right: 4px; }
+      .google-btn-wrapper { display: flex; justify-content: center; min-height: 40px; }
       .google-verified {
-        display: none;
-        align-items: center;
-        gap: 10px;
-        background: rgba(34,197,94,0.12);
-        border: 1px solid rgba(34,197,94,0.4);
-        border-radius: 8px;
-        padding: 8px 12px;
-        margin-top: 6px;
+        display: none; align-items: center; gap: 10px;
+        background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4);
+        border-radius: 8px; padding: 8px 12px; margin-top: 6px;
       }
       .google-verified.active { display: flex; }
-      .google-verified img {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 2px solid var(--oro-400);
-      }
-      .google-verified-info {
-        flex: 1;
-        text-align: left;
-        min-width: 0;
-      }
-      .google-verified-name {
-        font-size: 0.82em;
-        font-weight: 600;
-        color: #fff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .google-verified-email {
-        font-size: 0.7em;
-        color: #86efac;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .google-verified-check {
-        color: #22c55e;
-        font-size: 1.2em;
-        flex-shrink: 0;
-      }
-      .security-badge {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.65em;
-        color: var(--oro-300);
-        justify-content: center;
-        margin-top: 4px;
-      }
+      .google-verified img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--oro-400); }
+      .google-verified-info { flex: 1; text-align: left; min-width: 0; }
+      .google-verified-name { font-size: 0.82em; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .google-verified-email { font-size: 0.7em; color: #86efac; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .google-verified-check { color: #22c55e; font-size: 1.2em; flex-shrink: 0; }
+      .security-badge { display: flex; align-items: center; gap: 4px; font-size: 0.65em; color: var(--oro-300); justify-content: center; margin-top: 4px; }
       .security-badge i { color: var(--oro-500); }
       
       .floating-btn-wrap { margin-top:6px; display:none; flex-shrink:0; }
@@ -313,6 +254,19 @@
       @keyframes floatPulse { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
       @keyframes ripple { 0%{transform:scale(1);opacity:0.4} 100%{transform:scale(1.3);opacity:0} }
       .floating-btn:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 10px 24px rgba(37,211,102,0.5); }
+      
+      /* ✅ NUEVO: Botón WhatsApp dinámico para reactivación */
+      .btn-whatsapp-dynamic {
+        display: inline-flex; align-items: center; gap: 8px;
+        width: 100%; padding: 10px; margin-top: 8px;
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: #fff !important; border: none; border-radius: 9px;
+        font-size: 0.82em; font-weight: 600; font-family: 'Poppins', sans-serif;
+        cursor: pointer; text-decoration: none; justify-content: center;
+        box-shadow: 0 6px 16px rgba(37,211,102,0.3);
+        transition: all 0.3s; animation: fadeIn 0.4s ease-out;
+      }
+      .btn-whatsapp-dynamic:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(37,211,102,0.5); }
       
       button { width:100%; padding:10px; border:none; border-radius:9px; font-size:0.82em; font-weight:600; font-family:'Poppins',sans-serif; letter-spacing:0.8px; text-transform:uppercase; cursor:pointer; margin-top:6px; transition:all 0.3s cubic-bezier(0.4,0,0.2,1); position:relative; overflow:hidden; flex-shrink:0; }
       .btn-primary { background:linear-gradient(135deg,var(--vino-600),var(--vino-800)); color:#fff; border:1px solid rgba(212,175,55,0.4); box-shadow:0 6px 16px rgba(139,26,42,0.4); }
@@ -330,12 +284,7 @@
         font-size: 0.82em; font-weight: 600; font-family: 'Poppins', sans-serif;
         transition: all 0.3s;
       }
-      .preview-btn:hover {
-        background: rgba(212, 175, 55, 0.2);
-        color: var(--oro-300);
-        border-color: var(--oro-400);
-        transform: translateY(-1px);
-      }
+      .preview-btn:hover { background: rgba(212, 175, 55, 0.2); color: var(--oro-300); border-color: var(--oro-400); transform: translateY(-1px); }
 
       .divider { display:flex; align-items:center; margin:10px 0 6px; color:rgba(212,175,55,0.6); font-size:0.7em; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; flex-shrink:0; }
       .divider::before, .divider::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.35),transparent); }
@@ -446,6 +395,14 @@
   </div>
 
   <div id="alertBox" class="alert"></div>
+  
+  <!-- ✅ CONTENEDOR PARA BOTÓN WHATSAPP DINÁMICO (Reactivación) -->
+  <div id="reactivationWrap" class="hidden" style="flex-shrink:0;">
+    <a id="btnReactivationWA" href="#" target="_blank" class="btn-whatsapp-dynamic">
+      <i class="fab fa-whatsapp" style="font-size:1.2em;"></i>
+      <span>Solicitar Reactivación al Administrador</span>
+    </a>
+  </div>
 
   <div class="main-content">
     <div class="divider"><span>Iniciar Sesión</span></div>
@@ -615,16 +572,10 @@
     try {
       const payload = decodeJwt(response.credential);
       googleUserActual = {
-        email: payload.email,
-        name: payload.name,
-        given_name: payload.given_name,
-        family_name: payload.family_name,
-        picture: payload.picture,
-        sub: payload.sub,
+        email: payload.email, name: payload.name, given_name: payload.given_name,
+        family_name: payload.family_name, picture: payload.picture, sub: payload.sub,
         email_verified: payload.email_verified
       };
-
-      console.log('✅ Usuario de Google verificado:', googleUserActual);
 
       if (formularioActivo === 'secundaria') {
         document.getElementById('sec_nombre').value = payload.given_name || '';
@@ -751,10 +702,8 @@
     badge.classList.add('active');
   }
 
-  // ✅ CIERRE DE SESIÓN SEGURO CON LIMPIEZA DE HISTORIAL
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
-      // Usamos la función global definida en el head
       if (window.forzarCierreSesion) {
         window.forzarCierreSesion('Logout manual');
       } else {
@@ -767,16 +716,9 @@
   function iniciarModoInvitado(event) {
     if (event) event.preventDefault();
     localStorage.removeItem('jarvaz_sesion');
-    
     const invitado = {
-      id: 'guest_mode',
-      tipo: 'invitado',
-      categoria: 'invitado',
-      nombres: 'Invitado',
-      apellidos: '',
-      email: '',
-      telefono: '',
-      isGuest: true
+      id: 'guest_mode', tipo: 'invitado', categoria: 'invitado',
+      nombres: 'Invitado', apellidos: '', email: '', telefono: '', isGuest: true
     };
     localStorage.setItem('jarvaz_sesion', JSON.stringify(invitado));
     window.location.href = 'inicio_de_sesion_general.html';
@@ -834,6 +776,9 @@
     notice.style.display = 'none';
     floatingWrap.classList.remove('active');
     
+    // ✅ Ocultar botón de reactivación al cambiar categoría
+    document.getElementById('reactivationWrap').classList.add('hidden');
+    
     if (value && forms[value]) {
       forms[value].classList.remove("hidden");
       googleAuths[value].classList.remove("hidden");
@@ -887,6 +832,15 @@
   }
   function hideAlert() { document.getElementById('alertBox').style.display = 'none'; }
 
+  // ✅ Función para mostrar botón de reactivación WhatsApp
+  function mostrarBotonReactivacion(emailUsuario) {
+    const wrap = document.getElementById('reactivationWrap');
+    const btn = document.getElementById('btnReactivationWA');
+    const mensaje = `Hola Admin JARVAZ, mi cuenta con correo ${emailUsuario} fue desactivada. Solicito información sobre el motivo y posible reactivación.`;
+    btn.href = `https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`;
+    wrap.classList.remove('hidden');
+  }
+
   function enviarWhatsApp(event) {
     event.preventDefault();
     const elN = document.getElementById('prof_nombre');
@@ -901,8 +855,10 @@
     window.open(`https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`, '_blank');
   }
 
+  // ✅ FUNCIÓN SAVEUSER MEJORADA: Detecta CUENTA_DESACTIVADA y Eliminado
   async function saveUser(form, category) {
     hideAlert();
+    document.getElementById('reactivationWrap').classList.add('hidden');
     
     if (!googleUserActual) {
       showAlert('🔒 Primero debes verificar tu identidad con Google (botón "Sign in with Google")', 'error');
@@ -911,8 +867,7 @@
     
     const v = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
     const params = { 
-      action: 'registrarUsuario', 
-      tipo: category,
+      action: 'registrarUsuario', tipo: category,
       googleSub: googleUserActual.sub,
       emailGoogle: googleUserActual.email,
       emailVerified: googleUserActual.email_verified ? 'SI' : 'NO'
@@ -936,26 +891,42 @@
 
     const btn = form.querySelector('button[type="submit"]');
     btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Guardando...';
+    
     try {
       const res = await llamarAPI(params);
+      
       if (res.status === 'success') {
         const user = {
           id: res.id, tipo: category, categoria: category,
           nombres: params.nombres, apellidos: params.apellidos, email: params.email,
           telefono: params.telefono, colegio: params.colegio || '', grado: params.grado || '',
-          googleSub: googleUserActual.sub,
-          googlePic: googleUserActual.picture,
-          authMethod: 'google'
+          googleSub: googleUserActual.sub, googlePic: googleUserActual.picture, authMethod: 'google'
         };
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
-        showAlert('✅ ¡Cuenta segura creada! Tus datos están protegidos con Google. Redirigiendo...', 'success');
+        
+        // ✅ Mensaje diferenciado para re-registro vs nuevo
+        const msgExito = (res.message && res.message.includes('restaurada'))
+          ? '✅ ¡Cuenta restaurada! Bienvenido de nuevo a JARVAZ. Redirigiendo...'
+          : '✅ ¡Cuenta segura creada! Tus datos están protegidos con Google. Redirigiendo...';
+        
+        showAlert(msgExito, 'success');
+        document.getElementById('reactivationWrap').classList.add('hidden');
         setTimeout(() => { window.location.href = "inicio_de_sesion_general.html"; }, 1800);
+        
       } else {
-        showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
+        // ✅ DETECCIÓN DE CUENTA DESACTIVADA
+        if (res.code === 'CUENTA_DESACTIVADA') {
+          showAlert(res.message || 'Esta cuenta fue desactivada por el administrador.', 'warning');
+          mostrarBotonReactivacion(params.email);
+        } else {
+          showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
+          document.getElementById('reactivationWrap').classList.add('hidden');
+        }
       }
     } catch (err) {
       showAlert('⚠️ ' + err.message, 'error');
+      document.getElementById('reactivationWrap').classList.add('hidden');
     } finally {
       btn.disabled = false; btn.innerHTML = 'Crear Cuenta Segura';
     }
@@ -967,11 +938,7 @@
 
   async function verificarCodigoProfesor() {
     hideAlert();
-    
-    if (!googleUserActual) {
-      showAlert('🔒 Primero verifica tu identidad con Google', 'error');
-      return;
-    }
+    if (!googleUserActual) { showAlert('🔒 Primero verifica tu identidad con Google', 'error'); return; }
     
     const codigo = document.getElementById('prof_codigo').value.trim();
     if (!codigo) { showAlert('Ingresa tu código de profesor JARVAZ', 'error'); return; }
@@ -979,10 +946,8 @@
     btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando...';
     try {
       const res = await llamarAPI({ 
-        action: 'verificarCodigoProfesor', 
-        codigo: codigo,
-        googleSub: googleUserActual.sub,
-        emailGoogle: googleUserActual.email
+        action: 'verificarCodigoProfesor', codigo: codigo,
+        googleSub: googleUserActual.sub, emailGoogle: googleUserActual.email
       });
       if (res.status === 'success') {
         if (res.modo === 'reingreso') {
@@ -1000,25 +965,18 @@
       } else {
         showAlert('❌ ' + (res.message || 'Código no válido'), 'error');
       }
-    } catch (err) {
-      showAlert('⚠️ ' + err.message, 'error');
-    } finally {
-      btn.disabled = false; btn.innerHTML = 'Verificar código';
-    }
+    } catch (err) { showAlert('⚠️ ' + err.message, 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = 'Verificar código'; }
   }
 
   async function registrarProfesor() {
     hideAlert();
-    if (!googleUserActual) {
-      showAlert('🔒 Verifica tu identidad con Google primero', 'error');
-      return;
-    }
+    if (!googleUserActual) { showAlert('🔒 Verifica tu identidad con Google primero', 'error'); return; }
     const v = id => document.getElementById(id).value.trim();
     const codigo = window._profCodigo || document.getElementById('prof_codigo').value.trim();
     if (!v('prof_nombre') || !v('prof_apellidos') || !v('prof_especialidad') ||
         !v('prof_email') || !v('prof_telefono') || !v('prof_nacimiento')) {
-      showAlert('Completa todos los campos', 'error');
-      return;
+      showAlert('Completa todos los campos', 'error'); return;
     }
     const params = {
       action: 'registrarProfesor', codigoProfesor: codigo,
@@ -1039,16 +997,14 @@
         mostrarSesionActiva(user);
         showAlert('✅ ¡Cuenta de profesor activada!', 'success');
         setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1500);
-      } else {
-        showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error');
-      }
-    } catch (err) {
-      showAlert('⚠️ ' + err.message, 'error');
-    }
+      } else { showAlert('❌ ' + (res.message || 'No se pudo registrar'), 'error'); }
+    } catch (err) { showAlert('⚠️ ' + err.message, 'error'); }
   }
 
   document.getElementById("btnLogin").addEventListener("click", async () => {
     hideAlert();
+    document.getElementById('reactivationWrap').classList.add('hidden');
+    
     const contacto = document.getElementById("login_contacto").value.trim();
     const password = document.getElementById("login_password").value;
     if (!contacto || !password) { showAlert("Completa correo/teléfono y contraseña", 'error'); return; }
@@ -1072,7 +1028,6 @@
             btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
             return;
           }
-          
           if (googleUserActual.sub !== user.googleSub) {
             showAlert('❌ Acceso denegado: Debes iniciar sesión con el mismo Gmail que usaste al registrarte (' + user.email + ')', 'error');
             btn.disabled = false; btn.innerHTML = 'Iniciar Sesión';
@@ -1099,7 +1054,6 @@
   const _handleGoogleCredentialOriginal = handleGoogleCredential;
   handleGoogleCredential = function(response) {
     _handleGoogleCredentialOriginal(response);
-    
     if (window._loginPendiente && googleUserActual) {
       const { user } = window._loginPendiente;
       if (googleUserActual.sub === user.googleSub) {
@@ -1116,7 +1070,6 @@
     }
   };
   
-  // Foco inicial
   window.addEventListener('DOMContentLoaded', () => { 
     const loginInput = document.getElementById('login_contacto');
     if (loginInput) setTimeout(() => loginInput.focus(), 500);
