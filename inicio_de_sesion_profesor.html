@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.4 - Panel Profesor (Sincronizado con Backend) -->
+    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.5 - Panel Profesor (Sincronizado con Backend v5.5) -->
     <script>
-    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.4 - inicio_de_sesion_profesor.html */
+    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.5 - inicio_de_sesion_profesor.html */
     (function () {
       const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
       const WHATSAPP_ADMIN = '51973441252';
@@ -20,16 +20,22 @@
       // Bloqueo por INACTIVO: Muestra botón WhatsApp, NO borra sesión
       function bloquearPorInactivo() {
         try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
-        // ⚠️ IMPORTANTE: NO borramos jarvaz_sesion → cuando admin reactive, ingresa directo
+        // ⚠️ NO borramos jarvaz_sesion → cuando admin reactive, ingresa directo
         sessionStorage.clear();
         
-        // Construir mensaje WhatsApp dinámico
-        var sesion = getSesionLocal();
-        var nombre = sesion && sesion.data ? (sesion.data.nombres || sesion.data.Nombres || 'Profesor') : 'Profesor';
-        var msg = `Hola Admin JARVAZ, soy ${nombre}. Mi cuenta de profesor aparece como Inactiva. Solicito información sobre el motivo y posible reactivación.`;
+        // Construir mensaje WhatsApp dinámico con manejo seguro
+        var nombre = 'Profesor';
+        try {
+          var s = localStorage.getItem('jarvaz_sesion');
+          if (s) {
+            var u = JSON.parse(s);
+            nombre = u.nombres || u.Nombres || 'Profesor';
+          }
+        } catch(e) {}
+        
+        var msg = 'Hola Admin JARVAZ, soy ' + nombre + '. Mi cuenta de profesor aparece como Inactiva. Solicito información sobre el motivo y posible reactivación.';
         var waUrl = 'https://wa.me/' + WHATSAPP_ADMIN + '?text=' + encodeURIComponent(msg);
         
-        // Redirigir a inicio.html con parámetro especial para mostrar botón WA
         window.location.replace('inicio.html?profesor_inactivo=1&wa_url=' + encodeURIComponent(waUrl));
       }
       
@@ -62,7 +68,7 @@
           
           window[cbName] = function(data) {
             cleanup();
-            console.log('🔍 Guardián Profesor v5.4:', JSON.stringify(data));
+            console.log('🔍 Guardián Profesor v5.5:', JSON.stringify(data));
             
             // ✅ CASO 1: PROFESOR ACTIVO Y VÁLIDO → Mostrar página
             if (data && data.activo === 'SI' && data.tipo === 'profesor') {
@@ -73,8 +79,7 @@
               return;
             }
             
-            // ✅ CASO 2: INACTIVO (Detectado por backend v5.4)
-            // El backend devuelve activo:'NO' y existe:true para inactivos
+            // ✅ CASO 2: INACTIVO → Botón WhatsApp, NO borrar sesión
             if (data && data.existe === true && data.activo === 'NO') {
               console.warn('⚠️ Profesor INACTIVO. Redirigiendo a contacto admin.');
               bloquearPorInactivo();
@@ -95,7 +100,7 @@
               return;
             }
             
-            // Fallback seguro: Si hay duda, mostrar página pero con precaución
+            // Fallback seguro
             try {
               document.documentElement.style.visibility = 'visible';
               document.documentElement.style.opacity = '1';
@@ -111,7 +116,6 @@
           script.src = API_URL + '?action=verificarExistencia&id=' + encodeURIComponent(uid) + '&callback=' + cbName;
           script.onerror = function(){ 
             cleanup(); 
-            // En caso de error de red, permitir ver la página (modo offline básico)
             try {
               document.documentElement.style.visibility = 'visible';
               document.documentElement.style.opacity = '1';
@@ -129,7 +133,7 @@
       // Ejecutar al cargar
       validarRemoto(sesion.uid);
       
-      // Re-validar al volver desde segundo plano (CRÍTICO para reactivación sin re-login)
+      // Re-validar al volver desde segundo plano
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
           var s = getSesionLocal();
@@ -751,7 +755,6 @@
                         const fecha = new Date(pub.Fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
                         const imageHtml = pub.ImagenURL ? `<div class="post-image"><img src="${pub.ImagenURL}" alt="Imagen" loading="lazy"></div>` : '';
                         
-                        // Escapar comillas simples para evitar errores en onclick
                         const textoRedes = `${pub.Titulo}\n\n${pub.Contenido}\n\n#JARVAZ #Preuniversitario #Academia`.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         
                         html += `
@@ -797,7 +800,6 @@
 
         // ===== UTILIDADES =====
         function copiarTexto(texto, red) {
-            // Decodificar entidades HTML antes de copiar
             const temp = document.createElement('textarea');
             temp.innerHTML = texto;
             const textoDecodificado = temp.value;
