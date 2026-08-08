@@ -20,10 +20,8 @@
       // Bloqueo por INACTIVO: Muestra botón WhatsApp, NO borra sesión
       function bloquearPorInactivo() {
         try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
-        // ⚠️ NO borramos jarvaz_sesion → cuando admin reactive, ingresa directo
         sessionStorage.clear();
         
-        // Construir mensaje WhatsApp dinámico con manejo seguro
         var nombre = 'Profesor';
         try {
           var s = localStorage.getItem('jarvaz_sesion');
@@ -70,7 +68,6 @@
             cleanup();
             console.log('🔍 Guardián Profesor v5.6:', JSON.stringify(data));
             
-            // ✅ CASO 1: PROFESOR ACTIVO Y VÁLIDO → Mostrar página
             if (data && data.activo === 'SI' && data.tipo === 'profesor') {
               try {
                 document.documentElement.style.visibility = 'visible';
@@ -79,28 +76,24 @@
               return;
             }
             
-            // ✅ CASO 2: INACTIVO → Botón WhatsApp, NO borrar sesión
             if (data && data.existe === true && data.activo === 'NO') {
               console.warn('⚠️ Profesor INACTIVO. Redirigiendo a contacto admin.');
               bloquearPorInactivo();
               return;
             }
             
-            // ✅ CASO 3: ELIMINADO o FILA BORRADA → Expulsión total
             if (!data || data.existe === false) {
               console.warn('⛔ Profesor eliminado o fila borrada. Expulsión total.');
               expulsarAlInicio();
               return;
             }
             
-            // ✅ CASO 4: Activo pero tipo incorrecto → Expulsar
             if (data.activo === 'SI' && data.tipo !== 'profesor') {
               console.warn('⛔ Tipo mismatch. BD dice:', data.tipo);
               expulsarAlInicio();
               return;
             }
             
-            // Fallback seguro
             try {
               document.documentElement.style.visibility = 'visible';
               document.documentElement.style.opacity = '1';
@@ -130,10 +123,8 @@
         }
       }
       
-      // Ejecutar al cargar
       validarRemoto(sesion.uid);
       
-      // Re-validar al volver desde segundo plano
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
           var s = getSesionLocal();
@@ -142,7 +133,6 @@
         }
       });
       
-      // Re-validar al restaurar desde caché
       window.addEventListener('pageshow', function(e) {
         if (e.persisted) {
           var s = getSesionLocal();
@@ -151,14 +141,12 @@
         }
       });
       
-      // Detectar cierre en otra pestaña
       window.addEventListener('storage', function(e) {
         if (e.key === 'jarvaz_sesion' && !e.newValue) {
           expulsarAlInicio();
         }
       });
       
-      // Anti-retroceso
       try {
         history.replaceState({page:'profesor'}, '', window.location.href);
         history.pushState({page:'profesor'}, '', window.location.href);
@@ -184,199 +172,273 @@
         html { visibility: hidden; opacity: 0; transition: opacity 0.3s ease; }
         
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        :root {
-            --primary: #A52238; --primary-dark: #6B1420; --secondary: #6c757d;
-            --success: #28a745; --danger: #dc3545; --warning: #ffc107; --info: #17a2b8;
-            --light: #FAF6F0; --dark: #2D0A0F; --white: #ffffff;
-            --gold: #D4AF37; --gold-light: #E5C158;
-            --bg-gradient: linear-gradient(135deg, #A52238, #6B1420);
-            --card-radius: 12px; --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        body { background: var(--light); color: var(--dark); overflow-x: hidden; line-height: 1.5; }
         
+        :root {
+            --primary: #A52238;
+            --primary-dark: #6B1420;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #FAF6F0;
+            --dark: #2D0A0F;
+            --white: #ffffff;
+            --gold: #D4AF37;
+            --gold-light: #E5C158;
+            --bg-gradient: linear-gradient(135deg, #A52238, #6B1420);
+            --card-radius: 16px;
+            --card-shadow: 0 8px 24px rgba(165, 34, 56, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body { background: var(--light); color: var(--dark); overflow-x: hidden; line-height: 1.6; }
+
+        /* --- HEADER & NAV --- */
         .desktop-header {
             background: var(--bg-gradient); color: var(--white); padding: 0.8rem 0;
             position: fixed; top: 0; width: 100%; z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); backdrop-filter: blur(10px);
         }
         .nav-container {
             max-width: 1200px; margin: 0 auto; display: flex;
-            justify-content: space-between; align-items: center; padding: 0 1rem;
+            justify-content: space-between; align-items: center; padding: 0 1.5rem;
         }
-        .logo { font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+        .logo { 
+            font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; cursor: pointer; letter-spacing: -0.5px;
+        }
+        .logo span { font-size: 0.85rem; font-weight: 500; opacity: 0.9; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; }
+        
         .user-menu { display: flex; align-items: center; gap: 1rem; }
         .avatar {
-            width: 36px; height: 36px; border-radius: 50%; background: var(--white);
+            width: 42px; height: 42px; border-radius: 50%; background: var(--white);
             display: flex; align-items: center; justify-content: center; font-weight: bold;
-            color: var(--primary); cursor: pointer; transition: transform 0.3s ease;
+            color: var(--primary); cursor: pointer; transition: var(--transition);
+            border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .avatar:hover { transform: scale(1.1); }
+        .avatar:hover { transform: scale(1.05); border-color: var(--gold); }
 
-        .mobile-header { display: none; background: var(--bg-gradient); color: var(--white); position: fixed; top: 0; width: 100%; z-index: 1000; }
-        .mobile-nav-top { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; }
-        .mobile-logo { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
-        .hamburger-menu { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
+        .mobile-header { display: none; background: var(--bg-gradient); color: var(--white); position: fixed; top: 0; width: 100%; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .mobile-nav-top { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; }
+        .mobile-logo { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; }
+        .hamburger-menu { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; padding: 5px; }
 
+        /* --- LAYOUT GRID --- */
         .main-container {
-            max-width: 1200px; margin: 80px auto 20px; padding: 0 1rem;
-            display: grid; grid-template-columns: 280px 1fr 280px; gap: 1.5rem;
+            max-width: 1200px; margin: 90px auto 30px; padding: 0 1.5rem;
+            display: grid; grid-template-columns: 300px 1fr 280px; gap: 2rem;
         }
+
+        /* --- SIDEBARS & CARDS --- */
         .sidebar {
             background: var(--white); border-radius: var(--card-radius);
-            padding: 1.2rem; box-shadow: var(--card-shadow); height: fit-content;
+            padding: 1.5rem; box-shadow: var(--card-shadow); height: fit-content;
+            position: sticky; top: 100px;
         }
         .sidebar-title {
-            font-size: 1rem; font-weight: 600; margin-bottom: 0.8rem;
-            color: var(--dark); display: flex; align-items: center; gap: 0.5rem;
+            font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;
+            color: var(--dark); display: flex; align-items: center; gap: 0.6rem;
+            padding-bottom: 0.8rem; border-bottom: 2px solid var(--light);
         }
 
-        .user-profile { text-align: center; margin-bottom: 1.5rem; }
+        /* Perfil Profesor */
+        .user-profile { text-align: center; margin-bottom: 1rem; }
         .profile-avatar-large {
-            width: 90px; height: 90px; border-radius: 50%;
+            width: 100px; height: 100px; border-radius: 50%;
             background: var(--bg-gradient); display: flex; align-items: center;
             justify-content: center; color: var(--white); font-weight: bold;
-            font-size: 2.2rem; margin: 0 auto 1rem; border: 3px solid var(--gold);
+            font-size: 2.5rem; margin: 0 auto 1rem; 
+            border: 4px solid var(--white); box-shadow: 0 8px 20px rgba(165, 34, 56, 0.25);
         }
-        .profile-name { font-size: 1.3rem; font-weight: bold; color: var(--dark); margin-bottom: 0.3rem; }
+        .profile-name { font-size: 1.4rem; font-weight: 800; color: var(--dark); margin-bottom: 0.4rem; line-height: 1.2; }
         .profile-type {
-            font-size: 0.85rem; color: var(--primary); font-weight: 600;
-            background: rgba(165, 34, 56, 0.1); padding: 0.3rem 0.8rem;
-            border-radius: 15px; display: inline-block;
+            font-size: 0.85rem; color: var(--primary); font-weight: 700;
+            background: rgba(165, 34, 56, 0.08); padding: 0.4rem 1rem;
+            border-radius: 20px; display: inline-block; margin-bottom: 1rem;
         }
-        .user-info-section { background: var(--light); padding: 1rem; border-radius: 10px; margin-top: 1rem; text-align: left; }
-        .info-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .info-item:last-child { border-bottom: none; }
-        .info-item i { color: var(--primary); width: 20px; text-align: center; }
-        .info-item-text { flex: 1; font-size: 0.85rem; color: var(--dark); }
-        .info-item-label { font-weight: 600; color: var(--secondary); font-size: 0.75rem; }
+        .user-info-section { background: var(--light); padding: 1.2rem; border-radius: 12px; margin-top: 1rem; text-align: left; }
+        .info-item { display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .info-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-item i { color: var(--primary); width: 20px; text-align: center; margin-top: 3px; }
+        .info-item-text { flex: 1; font-size: 0.9rem; color: var(--dark); word-break: break-word; }
+        .info-item-label { font-weight: 700; color: var(--secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px; }
 
+        /* --- CREATE POST CARD --- */
         .create-post {
             background: var(--white); border-radius: var(--card-radius);
-            padding: 1.5rem; box-shadow: var(--card-shadow); margin-bottom: 1.5rem;
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 2rem; box-shadow: var(--card-shadow); margin-bottom: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.15); position: relative; overflow: hidden;
         }
+        .create-post::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: var(--bg-gradient);
+        }
+        .create-post h3 { font-size: 1.3rem; margin-bottom: 1.5rem; color: var(--dark); display: flex; align-items: center; gap: 0.8rem; }
+        .create-post h3 i { color: var(--primary); }
+        
         .post-input {
-            width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 10px;
-            background: var(--light); resize: none; font-size: 1rem; margin-bottom: 0.8rem;
-            font-family: inherit; transition: all 0.3s ease;
+            width: 100%; padding: 1rem 1.2rem; border: 2px solid #eee; border-radius: 12px;
+            background: #fdfdfd; resize: none; font-size: 1rem; margin-bottom: 1rem;
+            font-family: inherit; transition: var(--transition); color: var(--dark);
         }
-        .post-input:focus { outline: none; border-color: var(--primary); background: var(--white); }
+        .post-input:focus { outline: none; border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 4px rgba(165, 34, 56, 0.05); }
+        .post-input::placeholder { color: #aaa; }
         
         .file-input-label {
-            display: flex; align-items: center; gap: 0.8rem; padding: 1rem;
-            border: 2px dashed var(--primary); border-radius: 10px;
-            background: rgba(165, 34, 56, 0.05); color: var(--primary);
-            cursor: pointer; transition: all 0.3s ease; margin-bottom: 0.8rem;
+            display: flex; align-items: center; gap: 1rem; padding: 1.2rem;
+            border: 2px dashed #ddd; border-radius: 12px;
+            background: rgba(250, 246, 240, 0.5); color: var(--secondary);
+            cursor: pointer; transition: var(--transition); margin-bottom: 1.5rem;
+            font-weight: 600;
         }
-        .file-input-label:hover { background: rgba(165, 34, 56, 0.1); border-color: var(--primary-dark); }
+        .file-input-label:hover { background: rgba(165, 34, 56, 0.03); border-color: var(--primary); color: var(--primary); }
+        .file-input-label i { font-size: 1.5rem; }
         .file-input-label input[type="file"] { display: none; }
+        
         .image-preview {
-            max-width: 100%; border-radius: 10px; margin-top: 0.5rem;
-            display: none; border: 2px solid var(--gold);
+            max-width: 100%; max-height: 300px; border-radius: 12px; margin-top: 0.5rem; margin-bottom: 1.5rem;
+            display: none; border: 2px solid var(--gold); object-fit: contain; background: #000;
         }
 
-        .post-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
-        
-        .feed { display: flex; flex-direction: column; gap: 1.2rem; }
+        /* --- FEED & POSTS --- */
+        .feed { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; } /* min-width fix for grid */
         .post {
             background: var(--white); border-radius: var(--card-radius);
-            padding: 1.2rem; box-shadow: var(--card-shadow); transition: transform 0.3s ease;
+            padding: 1.8rem; box-shadow: var(--card-shadow); transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.02);
         }
-        .post:hover { transform: translateY(-3px); }
-        .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
-        .post-user { display: flex; align-items: center; gap: 0.8rem; }
-        .post-user-avatar {
-            width: 40px; height: 40px; border-radius: 50%; background: var(--bg-gradient);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--white); font-weight: bold; flex-shrink: 0;
-        }
-        .post-user-info h4 { margin-bottom: 0.2rem; font-size: 0.95rem; }
-        .post-time { font-size: 0.75rem; color: var(--secondary); }
-        .post-content { margin-bottom: 0.8rem; line-height: 1.5; font-size: 0.95rem; white-space: pre-wrap; }
-        .post-image { width: 100%; border-radius: 10px; margin-bottom: 0.8rem; overflow: hidden; }
-        .post-image img { width: 100%; height: auto; display: block; }
+        .post:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(165, 34, 56, 0.12); }
         
+        .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+        .post-user { display: flex; align-items: center; gap: 1rem; }
+        .post-user-avatar {
+            width: 48px; height: 48px; border-radius: 50%; background: var(--bg-gradient);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--white); font-weight: bold; font-size: 1.2rem; flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(165, 34, 56, 0.2);
+        }
+        .post-user-info h4 { margin-bottom: 0.2rem; font-size: 1.05rem; color: var(--dark); }
+        .post-time { font-size: 0.8rem; color: var(--secondary); display: flex; align-items: center; gap: 0.4rem; }
+        
+        .post-title { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-bottom: 0.8rem; line-height: 1.3; }
+        .post-content { margin-bottom: 1.2rem; line-height: 1.7; font-size: 1rem; color: #444; white-space: pre-wrap; }
+        
+        .post-image { width: 100%; border-radius: 12px; margin-bottom: 1.2rem; overflow: hidden; border: 1px solid #eee; }
+        .post-image img { width: 100%; height: auto; display: block; transition: transform 0.5s ease; }
+        .post:hover .post-image img { transform: scale(1.01); }
+        
+        /* Social Share Box inside Post */
         .social-share-box {
-            background: var(--light); border-radius: 8px; padding: 1rem;
-            margin-top: 1rem; border: 1px dashed var(--gold);
+            background: var(--light); border-radius: 12px; padding: 1.2rem;
+            margin-top: 1.5rem; border: 1px solid rgba(212, 175, 55, 0.2);
         }
-        .social-share-title { font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
-        .social-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .social-share-title { font-size: 0.9rem; font-weight: 700; color: var(--dark); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.6rem; }
+        .social-buttons { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        
         .btn-social {
-            padding: 0.5rem 1rem; border-radius: 20px; border: none;
-            font-size: 0.8rem; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; gap: 0.4rem; transition: all 0.3s ease; color: white;
+            padding: 0.6rem 1.2rem; border-radius: 25px; border: none;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem; transition: var(--transition); color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+        .btn-social:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); filter: brightness(1.1); }
         .btn-fb { background: #1877F2; }
         .btn-ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
         .btn-tk { background: #000000; }
-        .btn-social:hover { transform: translateY(-2px); opacity: 0.9; }
         
-        .academy-links {
-            margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #eee;
-            display: flex; gap: 1rem; justify-content: center;
-        }
-        .academy-links a {
-            color: var(--secondary); font-size: 1.2rem; transition: color 0.3s ease; text-decoration: none;
-        }
-        .academy-links a:hover { color: var(--primary); }
+        .academy-links { padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.05); display: flex; gap: 1.5rem; justify-content: center; }
+        .academy-links a { color: var(--secondary); font-size: 1.3rem; transition: var(--transition); text-decoration: none; }
+        .academy-links a:hover { color: var(--primary); transform: scale(1.2); }
 
+        /* --- BUTTONS --- */
         .btn {
-            padding: 0.7rem 1.2rem; border: none; border-radius: 25px;
-            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
-            display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;
+            padding: 0.8rem 1.5rem; border: none; border-radius: 30px;
+            font-weight: 700; cursor: pointer; transition: var(--transition);
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; font-size: 0.95rem;
+            position: relative; overflow: hidden;
         }
-        .btn-primary { background: var(--bg-gradient); color: var(--white); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(165, 34, 56, 0.3); }
-        .btn-danger { background: var(--danger); color: var(--white); }
-        .btn-block { width: 100%; justify-content: center; }
+        .btn::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+            background: rgba(255,255,255,0.2); border-radius: 50%;
+            transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s;
+        }
+        .btn:hover::after { width: 300px; height: 300px; top: -150px; left: -150px; }
+        
+        .btn-primary { background: var(--bg-gradient); color: var(--white); box-shadow: 0 4px 15px rgba(165, 34, 56, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(165, 34, 56, 0.4); }
+        .btn-danger { background: var(--danger); color: var(--white); box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3); }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4); }
+        .btn-block { width: 100%; }
 
+        /* --- MOBILE SIDEBAR --- */
         .mobile-sidebar {
-            position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
-            background: var(--white); z-index: 1100; transition: left 0.3s ease; overflow-y: auto;
+            position: fixed; top: 0; left: -100%; width: 85%; max-width: 350px; height: 100%;
+            background: var(--white); z-index: 1100; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto;
+            box-shadow: 5px 0 30px rgba(0,0,0,0.2);
         }
         .mobile-sidebar.active { left: 0; }
         .sidebar-header {
-            background: var(--bg-gradient); color: var(--white); padding: 1.2rem;
+            background: var(--bg-gradient); color: var(--white); padding: 1.5rem;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .close-sidebar { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; }
-        .sidebar-links { padding: 1.2rem; }
+        .close-sidebar { background: none; border: none; color: var(--white); font-size: 1.5rem; cursor: pointer; padding: 5px; }
+        .sidebar-links { padding: 1rem 1.5rem; }
         .sidebar-link {
-            display: flex; align-items: center; gap: 1rem; padding: 0.8rem 0;
+            display: flex; align-items: center; gap: 1.2rem; padding: 1rem 0;
             text-decoration: none; color: var(--dark); border-bottom: 1px solid var(--light);
-            cursor: pointer; font-weight: 500;
+            cursor: pointer; font-weight: 600; font-size: 1.05rem; transition: var(--transition);
         }
-        .sidebar-link:hover { color: var(--primary); }
+        .sidebar-link:hover { color: var(--primary); padding-left: 5px; }
+        .sidebar-link i { width: 25px; color: var(--primary); }
+        
         .overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 1050;
+            background: rgba(45, 10, 15, 0.6); z-index: 1050; backdrop-filter: blur(3px);
+            opacity: 0; transition: opacity 0.3s ease;
         }
-        .overlay.active { display: block; }
+        .overlay.active { display: block; opacity: 1; }
 
-        .mobile-section { display: none; padding: 1.2rem; background: var(--white); }
+        .mobile-section { display: none; padding: 1.5rem; background: var(--white); animation: fadeIn 0.3s ease; }
         .mobile-section.active { display: block; }
 
-        @media (max-width: 1024px) {
-            .main-container { grid-template-columns: 1fr; gap: 1rem; }
-            .sidebar { display: block !important; margin-bottom: 1rem; }
+        /* --- NOTIFICATIONS --- */
+        .notification {
+            position: fixed; top: 100px; right: 20px; background: var(--white);
+            color: white; padding: 1rem 1.5rem; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 10000;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 90%;
+            display: flex; align-items: center; gap: 10px; font-weight: 600;
+            border-left: 5px solid var(--success);
         }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 1024px) {
+            .main-container { grid-template-columns: 1fr; gap: 1.5rem; margin-top: 80px; }
+            .sidebar.desktop-only { display: none !important; }
+            .create-post { padding: 1.5rem; }
+        }
+        
         @media (max-width: 768px) {
             .desktop-header { display: none; }
             .mobile-header { display: block; }
-            .main-container { margin: 120px auto 80px; padding: 0 15px; grid-template-columns: 1fr; }
-            .sidebar { display: none !important; }
-            .post-actions { flex-direction: column; }
-            .btn { width: 100%; justify-content: center; }
+            .main-container { margin: 70px auto 80px; padding: 0 1rem; width: 100%; }
+            
+            .post { padding: 1.5rem; }
+            .post-title { font-size: 1.2rem; }
+            .social-buttons { gap: 0.5rem; }
+            .btn-social { padding: 0.5rem 1rem; font-size: 0.8rem; flex: 1; justify-content: center; }
+            
+            .mobile-sidebar { width: 100%; max-width: 100%; }
         }
 
-        .notification {
-            position: fixed; top: 100px; right: 20px; background: var(--success);
-            color: white; padding: 1rem 1.5rem; border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000;
-            animation: fadeIn 0.3s ease; max-width: 90%;
+        @media (max-width: 480px) {
+            .profile-avatar-large { width: 80px; height: 80px; font-size: 2rem; }
+            .profile-name { font-size: 1.2rem; }
+            .create-post { padding: 1.2rem; }
+            .post-input { padding: 0.8rem 1rem; font-size: 0.95rem; }
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -384,7 +446,7 @@
     <header class="desktop-header">
         <div class="nav-container">
             <div class="logo" onclick="window.location.href='inicio_de_sesion_profesor.html'">
-                <i class="fas fa-graduation-cap"></i> JARVAZ <span style="font-size:0.8rem; opacity:0.8; margin-left:5px;">| Panel Profesor</span>
+                <i class="fas fa-graduation-cap"></i> JARVAZ <span>Panel Profesor</span>
             </div>
             <div class="user-menu">
                 <div class="avatar" id="userAvatar">PR</div>
@@ -397,8 +459,8 @@
     <header class="mobile-header">
         <div class="mobile-nav-top">
             <div class="mobile-logo"><i class="fas fa-graduation-cap"></i> JARVAZ</div>
-            <div style="display:flex; gap:1rem;">
-                <button class="btn btn-danger" onclick="logout()" style="padding:0.5rem;"><i class="fas fa-sign-out-alt"></i></button>
+            <div style="display:flex; gap:0.8rem; align-items:center;">
+                <button class="btn btn-danger" onclick="logout()" style="padding:0.5rem 0.8rem; border-radius:50%; width:40px; height:40px;"><i class="fas fa-sign-out-alt"></i></button>
                 <button class="hamburger-menu" id="hamburgerMenu"><i class="fas fa-bars"></i></button>
             </div>
         </div>
@@ -407,7 +469,7 @@
     <!-- MENÚ LATERAL MÓVIL -->
     <div class="mobile-sidebar" id="mobileSidebar">
         <div class="sidebar-header">
-            <h3 id="mobileUserName">Mi Perfil</h3>
+            <h3 id="mobileUserName" style="font-weight:700;">Mi Perfil</h3>
             <button class="close-sidebar" id="closeSidebar"><i class="fas fa-times"></i></button>
         </div>
         <div class="sidebar-links">
@@ -417,39 +479,47 @@
             <a class="sidebar-link" onclick="showMobileSection('socials')"><i class="fas fa-share-alt"></i> Redes de la Academia</a>
         </div>
         
+        <!-- Secciones Móviles -->
         <div class="mobile-section" id="mobileCreate">
-            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-plus-circle"></i> Nueva Publicación</h3>
-            <input type="text" class="post-input" id="mPostTitle" placeholder="Título de la publicación">
-            <textarea class="post-input" id="mPostContent" rows="4" placeholder="Escribe el contenido aquí..."></textarea>
+            <h3 style="margin-bottom:1.2rem; color:var(--primary); font-weight:800;"><i class="fas fa-plus-circle"></i> Nueva Publicación</h3>
+            <input type="text" class="post-input" id="mPostTitle" placeholder="Título llamativo...">
+            <textarea class="post-input" id="mPostContent" rows="5" placeholder="¿Qué quieres compartir hoy?"></textarea>
             
             <label class="file-input-label">
-                <i class="fas fa-image"></i>
-                <span id="mPostImageLabel">📷 Seleccionar imagen de la galería (opcional)</span>
+                <i class="fas fa-camera-retro"></i>
+                <span id="mPostImageLabel">Seleccionar imagen (opcional)</span>
                 <input type="file" id="mPostImage" accept="image/*" onchange="handleImageSelect(this, 'previewMobile', 'mPostImageLabel')">
             </label>
             <img id="previewMobile" class="image-preview">
             
             <button class="btn btn-primary btn-block" onclick="crearPublicacion(true)">
-                <i class="fas fa-paper-plane"></i> Publicar en JARVAZ
+                <i class="fas fa-paper-plane"></i> Publicar Ahora
             </button>
         </div>
         
         <div class="mobile-section" id="mobileFeed">
-            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-newspaper"></i> Feed</h3>
+            <h3 style="margin-bottom:1.2rem; color:var(--primary); font-weight:800;"><i class="fas fa-newspaper"></i> Feed Reciente</h3>
             <div id="mobileFeedContainer"></div>
         </div>
         
         <div class="mobile-section" id="mobileInfo">
-            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-user-circle"></i> Mi Información</h3>
+            <h3 style="margin-bottom:1.2rem; color:var(--primary); font-weight:800;"><i class="fas fa-user-circle"></i> Mi Información</h3>
             <div id="mobileInfoContainer"></div>
         </div>
         
         <div class="mobile-section" id="mobileSocials">
-            <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-share-alt"></i> Redes de JARVAZ</h3>
-            <div class="academy-links" style="flex-direction:column; align-items:flex-start; gap:1rem; margin-top:1rem;">
-                <a href="https://facebook.com/tuacademiajarvaz" target="_blank" style="color:#1877F2; font-size:1rem;"><i class="fab fa-facebook"></i> Facebook: @tuacademiajarvaz</a>
-                <a href="https://instagram.com/tuacademiajarvaz" target="_blank" style="color:#E1306C; font-size:1rem;"><i class="fab fa-instagram"></i> Instagram: @tuacademiajarvaz</a>
-                <a href="https://www.tiktok.com/@jarvaz09" target="_blank" style="color:#000000; font-size:1rem;"><i class="fab fa-tiktok"></i> TikTok: @jarvaz09</a>
+            <h3 style="margin-bottom:1.2rem; color:var(--primary); font-weight:800;"><i class="fas fa-share-alt"></i> Redes Oficiales</h3>
+            <p style="color:var(--secondary); margin-bottom:1.5rem; font-size:0.9rem;">Comparte nuestro contenido oficial:</p>
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <a href="https://facebook.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-fb" style="justify-content:center; text-decoration:none; width:100%;">
+                    <i class="fab fa-facebook-f"></i> Facebook Oficial
+                </a>
+                <a href="https://instagram.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-ig" style="justify-content:center; text-decoration:none; width:100%;">
+                    <i class="fab fa-instagram"></i> Instagram Oficial
+                </a>
+                <a href="https://www.tiktok.com/@jarvaz09" target="_blank" class="btn btn-social btn-tk" style="justify-content:center; text-decoration:none; width:100%;">
+                    <i class="fab fa-tiktok"></i> TikTok: @jarvaz09
+                </a>
             </div>
         </div>
     </div>
@@ -493,19 +563,19 @@
         <!-- Feed Central -->
         <main class="feed" id="mainFeed">
             <!-- Formulario de Creación (Desktop) -->
-            <div class="create-post">
-                <h3 style="margin-bottom:1rem; color:var(--primary);"><i class="fas fa-pen-fancy"></i> Crear Nueva Publicación</h3>
+            <div class="create-post fade-in">
+                <h3><i class="fas fa-pen-fancy"></i> Crear Nueva Publicación</h3>
                 <input type="text" id="postTitle" class="post-input" placeholder="Título de la publicación (ej: ¡Felicitaciones a los ingresantes!)">
-                <textarea id="postContent" class="post-input" rows="4" placeholder="Escribe el contenido aquí..."></textarea>
+                <textarea id="postContent" class="post-input" rows="4" placeholder="Escribe el contenido detallado aquí..."></textarea>
                 
                 <label class="file-input-label">
-                    <i class="fas fa-image"></i>
-                    <span id="postImageLabel">📷 Seleccionar imagen de la galería (opcional)</span>
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span id="postImageLabel">Arrastra o selecciona una imagen (opcional)</span>
                     <input type="file" id="postImage" accept="image/*" onchange="handleImageSelect(this, 'previewDesktop', 'postImageLabel')">
                 </label>
                 <img id="previewDesktop" class="image-preview">
                 
-                <div class="post-actions">
+                <div class="post-actions" style="justify-content: flex-end;">
                     <button class="btn btn-primary" onclick="crearPublicacion(false)">
                         <i class="fas fa-paper-plane"></i> Publicar en JARVAZ
                     </button>
@@ -514,9 +584,9 @@
 
             <!-- Lista de Publicaciones -->
             <div id="publicacionesList">
-                <div class="post" style="text-align:center; padding:2rem;">
-                    <i class="fas fa-spinner fa-spin" style="font-size:2rem; color:var(--primary);"></i>
-                    <p style="margin-top:1rem; color:var(--secondary);">Cargando publicaciones...</p>
+                <div class="post" style="text-align:center; padding:3rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:2.5rem; color:var(--primary);"></i>
+                    <p style="margin-top:1.5rem; color:var(--secondary); font-weight:600;">Cargando publicaciones recientes...</p>
                 </div>
             </div>
         </main>
@@ -524,24 +594,24 @@
         <!-- Sidebar Derecha: Redes Sociales -->
         <aside class="sidebar desktop-only">
             <div class="sidebar-title"><i class="fas fa-share-alt"></i> Redes de la Academia</div>
-            <p style="font-size:0.85rem; color:var(--secondary); margin-bottom:1rem;">
-                Comparte el contenido de JARVAZ en nuestras redes para mayor alcance.
+            <p style="font-size:0.9rem; color:var(--secondary); margin-bottom:1.5rem; line-height:1.5;">
+                Amplifica el alcance de JARVAZ compartiendo nuestro contenido oficial en tus redes.
             </p>
             <div style="display:flex; flex-direction:column; gap:0.8rem;">
-                <a href="https://facebook.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-fb" style="justify-content:center; text-decoration:none;">
+                <a href="https://facebook.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-fb" style="justify-content:center; text-decoration:none; width:100%;">
                     <i class="fab fa-facebook-f"></i> Facebook
                 </a>
-                <a href="https://instagram.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-ig" style="justify-content:center; text-decoration:none;">
+                <a href="https://instagram.com/tuacademiajarvaz" target="_blank" class="btn btn-social btn-ig" style="justify-content:center; text-decoration:none; width:100%;">
                     <i class="fab fa-instagram"></i> Instagram
                 </a>
-                <a href="https://www.tiktok.com/@jarvaz09" target="_blank" class="btn btn-social btn-tk" style="justify-content:center; text-decoration:none;">
+                <a href="https://www.tiktok.com/@jarvaz09" target="_blank" class="btn btn-social btn-tk" style="justify-content:center; text-decoration:none; width:100%;">
                     <i class="fab fa-tiktok"></i> TikTok: @jarvaz09
                 </a>
             </div>
             
-            <div class="sidebar-title" style="margin-top:2rem;"><i class="fas fa-info-circle"></i> Nota</div>
-            <p style="font-size:0.8rem; color:var(--secondary); line-height:1.4;">
-                Las imágenes se comprimen automáticamente. Las publicaciones se archivan después de 30 días.
+            <div class="sidebar-title" style="margin-top:2.5rem;"><i class="fas fa-info-circle"></i> Nota Importante</div>
+            <p style="font-size:0.85rem; color:var(--secondary); line-height:1.6; background:rgba(255,193,7,0.1); padding:1rem; border-radius:10px; border-left:3px solid var(--warning);">
+                Las imágenes se optimizan automáticamente para carga rápida. Las publicaciones se archivan después de 30 días para mantener el feed limpio.
             </p>
         </aside>
     </div>
@@ -558,7 +628,7 @@
             
             if (!file) {
                 preview.style.display = 'none';
-                label.textContent = '📷 Seleccionar imagen de la galería (opcional)';
+                label.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Arrastra o selecciona una imagen (opcional)';
                 selectedImageBase64 = '';
                 return;
             }
@@ -569,7 +639,7 @@
                 return;
             }
 
-            label.textContent = '⏳ Procesando imagen...';
+            label.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizando imagen...';
             
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -588,10 +658,12 @@
                     selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     preview.src = selectedImageBase64;
                     preview.style.display = 'block';
-                    label.textContent = '✅ ' + file.name;
+                    label.innerHTML = '<i class="fas fa-check-circle"></i> ' + file.name;
+                    label.style.borderColor = 'var(--success)';
+                    label.style.color = 'var(--success)';
                 };
                 img.onerror = function() {
-                    label.textContent = '❌ Error al procesar imagen';
+                    label.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error al procesar imagen';
                     selectedImageBase64 = '';
                 };
             };
@@ -648,7 +720,7 @@
             const mobileInfoContainer = document.getElementById('mobileInfoContainer');
             if (mobileInfoContainer) {
                 mobileInfoContainer.innerHTML = `
-                    <div class="user-info-section">
+                    <div class="user-info-section" style="background:var(--light); border-radius:12px; padding:1.2rem;">
                         <div class="info-item"><i class="fas fa-chalkboard-teacher"></i><div class="info-item-text"><div class="info-item-label">Especialidad</div><div>${user.Especialidad || 'No especificada'}</div></div></div>
                         <div class="info-item"><i class="fas fa-envelope"></i><div class="info-item-text"><div class="info-item-label">Email</div><div>${user.Email || 'No especificado'}</div></div></div>
                         <div class="info-item"><i class="fas fa-phone"></i><div class="info-item-text"><div class="info-item-label">Teléfono</div><div>${user.Telefono || 'No especificado'}</div></div></div>
@@ -733,8 +805,18 @@
                     document.getElementById('previewMobile').style.display = 'none';
                     document.getElementById('postImage').value = '';
                     document.getElementById('mPostImage').value = '';
-                    document.getElementById('postImageLabel').textContent = '📷 Seleccionar imagen de la galería (opcional)';
-                    document.getElementById('mPostImageLabel').textContent = '📷 Seleccionar imagen de la galería (opcional)';
+                    
+                    // Resetear labels
+                    const resetLabel = (id) => {
+                        const el = document.getElementById(id);
+                        if(el) {
+                            el.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Arrastra o selecciona una imagen (opcional)';
+                            el.style.borderColor = '#ddd';
+                            el.style.color = 'var(--secondary)';
+                        }
+                    };
+                    resetLabel('postImageLabel');
+                    resetLabel('mPostImageLabel');
                     
                     cargarPublicaciones();
                 } else {
@@ -755,20 +837,21 @@
                         const fecha = new Date(pub.Fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
                         const imageHtml = pub.ImagenURL ? `<div class="post-image"><img src="${pub.ImagenURL}" alt="Imagen" loading="lazy"></div>` : '';
                         
+                        // Escapar comillas para el onclick
                         const textoRedes = `${pub.Titulo}\n\n${pub.Contenido}\n\n#JARVAZ #Preuniversitario #Academia`.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         
                         html += `
-                            <div class="post">
+                            <div class="post fade-in">
                                 <div class="post-header">
                                     <div class="post-user">
                                         <div class="post-user-avatar">${(pub.AutorNombre || 'P').charAt(0)}</div>
                                         <div class="post-user-info">
                                             <h4>${pub.AutorNombre || 'Profesor JARVAZ'}</h4>
-                                            <p class="post-time">${fecha} · <i class="fas fa-chalkboard-teacher"></i></p>
+                                            <p class="post-time"><i class="far fa-clock"></i> ${fecha} · <i class="fas fa-chalkboard-teacher"></i> Profesor</p>
                                         </div>
                                     </div>
                                 </div>
-                                <h3 style="color:var(--primary); margin-bottom:0.5rem;">${pub.Titulo}</h3>
+                                <div class="post-title">${pub.Titulo}</div>
                                 <div class="post-content">${pub.Contenido}</div>
                                 ${imageHtml}
                                 
@@ -791,7 +874,7 @@
                     container.innerHTML = html;
                     if(mobileContainer) mobileContainer.innerHTML = html;
                 } else {
-                    const emptyMsg = '<div class="post" style="text-align:center; padding:2rem;"><p style="color:var(--secondary);">No hay publicaciones aún. ¡Sé el primero en publicar!</p></div>';
+                    const emptyMsg = '<div class="post fade-in" style="text-align:center; padding:3rem;"><i class="fas fa-feather-alt" style="font-size:3rem; color:#ddd; margin-bottom:1rem;"></i><p style="color:var(--secondary); font-weight:600;">No hay publicaciones aún. ¡Sé el primero en publicar!</p></div>';
                     container.innerHTML = emptyMsg;
                     if(mobileContainer) mobileContainer.innerHTML = emptyMsg;
                 }
@@ -816,8 +899,18 @@
             if (existing) existing.remove();
             const notification = document.createElement('div');
             notification.className = 'notification';
-            notification.style.background = type === 'success' ? 'var(--success)' : type === 'danger' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--info)';
-            notification.textContent = message;
+            
+            let icon = 'fa-info-circle';
+            let borderColor = 'var(--info)';
+            if(type === 'success') { icon = 'fa-check-circle'; borderColor = 'var(--success)'; }
+            if(type === 'danger') { icon = 'fa-exclamation-circle'; borderColor = 'var(--danger)'; }
+            if(type === 'warning') { icon = 'fa-exclamation-triangle'; borderColor = 'var(--warning)'; }
+            
+            notification.style.borderLeftColor = borderColor;
+            notification.style.background = type === 'info' ? 'var(--white)' : 'var(--white)';
+            notification.style.color = 'var(--dark)';
+            
+            notification.innerHTML = `<i class="fas ${icon}" style="color:${borderColor}; font-size:1.2rem;"></i> ${message}`;
             document.body.appendChild(notification);
             setTimeout(() => notification.remove(), 3500);
         }
