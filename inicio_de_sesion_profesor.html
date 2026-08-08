@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.4 - Panel Profesor (Inactivo vs Eliminado) -->
+    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.4 - Panel Profesor (Sincronizado con Backend) -->
     <script>
     /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.4 - inicio_de_sesion_profesor.html */
     (function () {
@@ -20,12 +20,13 @@
       // Bloqueo por INACTIVO: Muestra botón WhatsApp, NO borra sesión
       function bloquearPorInactivo() {
         try { document.documentElement.style.visibility = 'hidden'; } catch(e){}
-        // NO borramos jarvaz_sesion → cuando admin reactive, ingresa directo
+        // ⚠️ IMPORTANTE: NO borramos jarvaz_sesion → cuando admin reactive, ingresa directo
         sessionStorage.clear();
-        try { history.replaceState({page:'inactivo'}, '', 'inicio.html'); } catch(e){}
         
-        // Construir mensaje WhatsApp
-        var msg = 'Hola Admin JARVAZ, mi cuenta de profesor fue desactivada. Solicito información sobre el motivo y posible reactivación.';
+        // Construir mensaje WhatsApp dinámico
+        var sesion = getSesionLocal();
+        var nombre = sesion && sesion.data ? (sesion.data.nombres || sesion.data.Nombres || 'Profesor') : 'Profesor';
+        var msg = `Hola Admin JARVAZ, soy ${nombre}. Mi cuenta de profesor aparece como Inactiva. Solicito información sobre el motivo y posible reactivación.`;
         var waUrl = 'https://wa.me/' + WHATSAPP_ADMIN + '?text=' + encodeURIComponent(msg);
         
         // Redirigir a inicio.html con parámetro especial para mostrar botón WA
@@ -63,26 +64,27 @@
             cleanup();
             console.log('🔍 Guardián Profesor v5.4:', JSON.stringify(data));
             
-            // ✅ CASO 1: PROFESOR INACTIVO → Botón WhatsApp, NO borrar sesión
-            if (data && data.code === 'PROFESOR_INACTIVO') {
-              console.warn('⚠️ Profesor INACTIVO. Mostrando botón WhatsApp.');
-              bloquearPorInactivo();
-              return;
-            }
-            
-            // ✅ CASO 2: ELIMINADO o FILA BORRADA → Expulsión total
-            if (!data || data.existe === false) {
-              console.warn('⛔ Profesor eliminado o fila borrada. Expulsión total.');
-              expulsarAlInicio();
-              return;
-            }
-            
-            // ✅ CASO 3: ACTIVO y tipo profesor → Mostrar página
-            if (data.activo === 'SI' && data.tipo === 'profesor') {
+            // ✅ CASO 1: PROFESOR ACTIVO Y VÁLIDO → Mostrar página
+            if (data && data.activo === 'SI' && data.tipo === 'profesor') {
               try {
                 document.documentElement.style.visibility = 'visible';
                 document.documentElement.style.opacity = '1';
               } catch(e){}
+              return;
+            }
+            
+            // ✅ CASO 2: INACTIVO (Detectado por backend v5.4)
+            // El backend devuelve activo:'NO' y existe:true para inactivos
+            if (data && data.existe === true && data.activo === 'NO') {
+              console.warn('⚠️ Profesor INACTIVO. Redirigiendo a contacto admin.');
+              bloquearPorInactivo();
+              return;
+            }
+            
+            // ✅ CASO 3: ELIMINADO o FILA BORRADA → Expulsión total
+            if (!data || data.existe === false) {
+              console.warn('⛔ Profesor eliminado o fila borrada. Expulsión total.');
+              expulsarAlInicio();
               return;
             }
             
@@ -93,14 +95,7 @@
               return;
             }
             
-            // ✅ CASO 5: Existe pero no activo y sin código especial → Inactivo genérico
-            if (data.existe === true && data.activo !== 'SI') {
-              console.warn('⚠️ Profesor no activo (genérico). Botón WhatsApp.');
-              bloquearPorInactivo();
-              return;
-            }
-            
-            // Fallback seguro
+            // Fallback seguro: Si hay duda, mostrar página pero con precaución
             try {
               document.documentElement.style.visibility = 'visible';
               document.documentElement.style.opacity = '1';
@@ -116,6 +111,7 @@
           script.src = API_URL + '?action=verificarExistencia&id=' + encodeURIComponent(uid) + '&callback=' + cbName;
           script.onerror = function(){ 
             cleanup(); 
+            // En caso de error de red, permitir ver la página (modo offline básico)
             try {
               document.documentElement.style.visibility = 'visible';
               document.documentElement.style.opacity = '1';
@@ -133,7 +129,7 @@
       // Ejecutar al cargar
       validarRemoto(sesion.uid);
       
-      // Re-validar al volver desde segundo plano
+      // Re-validar al volver desde segundo plano (CRÍTICO para reactivación sin re-login)
       document.addEventListener('visibilitychange', function() {
         if (!document.hidden) {
           var s = getSesionLocal();
@@ -181,10 +177,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* 🔒 BLOQUEO POR CSS: Ocultar hasta validación remota */
-        html {
-            visibility: hidden;
-            opacity: 0;
-        }
+        html { visibility: hidden; opacity: 0; transition: opacity 0.3s ease; }
         
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         :root {
@@ -377,7 +370,7 @@
             position: fixed; top: 100px; right: 20px; background: var(--success);
             color: white; padding: 1rem 1.5rem; border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000;
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.3s ease; max-width: 90%;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -593,6 +586,10 @@
                     preview.style.display = 'block';
                     label.textContent = '✅ ' + file.name;
                 };
+                img.onerror = function() {
+                    label.textContent = '❌ Error al procesar imagen';
+                    selectedImageBase64 = '';
+                };
             };
             reader.readAsDataURL(file);
         }
@@ -656,16 +653,40 @@
             }
         }
 
-        // ===== JSONP =====
+        // ===== JSONP MEJORADO CON TIMEOUT Y LIMPIEZA =====
         function llamarAPI(params, callback) {
             const callbackName = 'jsonpCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
             const script = document.createElement('script');
-            window[callbackName] = function(data) { callback(data); delete window[callbackName]; script.remove(); };
+            let cleaned = false;
+            
+            const cleanup = () => {
+                if (cleaned) return;
+                cleaned = true;
+                try { delete window[callbackName]; } catch(e) { window[callbackName] = undefined; }
+                if (script.parentNode) script.parentNode.removeChild(script);
+            };
+            
+            window[callbackName] = function(data) { 
+                cleanup();
+                callback(data); 
+            };
+            
             params.callback = callbackName;
             const queryString = Object.keys(params).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
             script.src = `${APPS_SCRIPT_URL}?${queryString}`;
+            script.onerror = function() {
+                cleanup();
+                callback({ status: 'error', message: 'Error de conexión' });
+            };
+            
             document.head.appendChild(script);
-            setTimeout(() => { if (window[callbackName]) { delete window[callbackName]; script.remove(); callback({ status: 'error', message: 'Tiempo agotado' }); } }, 15000);
+            
+            setTimeout(() => { 
+                if (!cleaned) { 
+                    cleanup(); 
+                    callback({ status: 'error', message: 'Tiempo agotado' }); 
+                } 
+            }, 15000);
         }
 
         // ===== CREAR PUBLICACIÓN =====
@@ -728,17 +749,18 @@
                     let html = '';
                     response.data.forEach(pub => {
                         const fecha = new Date(pub.Fecha).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' });
-                        const imageHtml = pub.ImagenURL ? `<div class="post-image"><img src="${pub.ImagenURL}" alt="Imagen"></div>` : '';
+                        const imageHtml = pub.ImagenURL ? `<div class="post-image"><img src="${pub.ImagenURL}" alt="Imagen" loading="lazy"></div>` : '';
                         
-                        const textoRedes = `${pub.Titulo}\n\n${pub.Contenido}\n\n#JARVAZ #Preuniversitario #Academia`.replace(/'/g, "\\'");
+                        // Escapar comillas simples para evitar errores en onclick
+                        const textoRedes = `${pub.Titulo}\n\n${pub.Contenido}\n\n#JARVAZ #Preuniversitario #Academia`.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                         
                         html += `
                             <div class="post">
                                 <div class="post-header">
                                     <div class="post-user">
-                                        <div class="post-user-avatar">${pub.AutorNombre.charAt(0)}</div>
+                                        <div class="post-user-avatar">${(pub.AutorNombre || 'P').charAt(0)}</div>
                                         <div class="post-user-info">
-                                            <h4>${pub.AutorNombre}</h4>
+                                            <h4>${pub.AutorNombre || 'Profesor JARVAZ'}</h4>
                                             <p class="post-time">${fecha} · <i class="fas fa-chalkboard-teacher"></i></p>
                                         </div>
                                     </div>
@@ -748,11 +770,11 @@
                                 ${imageHtml}
                                 
                                 <div class="social-share-box">
-                                    <div class="social-share-title"><i class="fas fa-share-square"></i> Compartir en Redes (Copia y pega)</div>
+                                    <div class="social-share-title"><i class="fas fa-share-square"></i> Compartir en Redes</div>
                                     <div class="social-buttons">
-                                        <button class="btn-social btn-fb" onclick="copiarTexto('${textoRedes}', 'Facebook')"><i class="fab fa-facebook-f"></i> Copiar para FB</button>
-                                        <button class="btn-social btn-ig" onclick="copiarTexto('${textoRedes}', 'Instagram')"><i class="fab fa-instagram"></i> Copiar para IG</button>
-                                        <button class="btn-social btn-tk" onclick="copiarTexto('${textoRedes}', 'TikTok')"><i class="fab fa-tiktok"></i> Copiar para TK</button>
+                                        <button class="btn-social btn-fb" onclick="copiarTexto('${textoRedes}', 'Facebook')"><i class="fab fa-facebook-f"></i> FB</button>
+                                        <button class="btn-social btn-ig" onclick="copiarTexto('${textoRedes}', 'Instagram')"><i class="fab fa-instagram"></i> IG</button>
+                                        <button class="btn-social btn-tk" onclick="copiarTexto('${textoRedes}', 'TikTok')"><i class="fab fa-tiktok"></i> TK</button>
                                     </div>
                                     <div class="academy-links">
                                         <a href="https://facebook.com/tuacademiajarvaz" target="_blank" title="Reacciona en Facebook"><i class="fab fa-facebook"></i></a>
@@ -766,7 +788,7 @@
                     container.innerHTML = html;
                     if(mobileContainer) mobileContainer.innerHTML = html;
                 } else {
-                    const emptyMsg = '<div class="post" style="text-align:center; padding:2rem;"><p style="color:var(--secondary);">No hay publicaciones aún.</p></div>';
+                    const emptyMsg = '<div class="post" style="text-align:center; padding:2rem;"><p style="color:var(--secondary);">No hay publicaciones aún. ¡Sé el primero en publicar!</p></div>';
                     container.innerHTML = emptyMsg;
                     if(mobileContainer) mobileContainer.innerHTML = emptyMsg;
                 }
@@ -775,7 +797,12 @@
 
         // ===== UTILIDADES =====
         function copiarTexto(texto, red) {
-            navigator.clipboard.writeText(texto).then(() => {
+            // Decodificar entidades HTML antes de copiar
+            const temp = document.createElement('textarea');
+            temp.innerHTML = texto;
+            const textoDecodificado = temp.value;
+            
+            navigator.clipboard.writeText(textoDecodificado).then(() => {
                 showNotification(`✅ Texto copiado. ¡Pégalo en ${red}!`, 'success');
             }).catch(() => {
                 showNotification('❌ No se pudo copiar el texto', 'danger');
@@ -790,7 +817,7 @@
             notification.style.background = type === 'success' ? 'var(--success)' : type === 'danger' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--info)';
             notification.textContent = message;
             document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+            setTimeout(() => notification.remove(), 3500);
         }
 
         function logout() {
