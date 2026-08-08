@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.4 -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.5 -->
     <script>
     /* 🛡️ GUARDIÁN DE SESIÓN JARVAZ - inicio.html */
     (function () {
@@ -369,7 +369,6 @@
 
   <div id="alertBox" class="alert"></div>
   
-  <!-- ✅ CONTENEDOR PARA BOTÓN WHATSAPP DINÁMICO (Reactivación) -->
   <div id="reactivationWrap" class="hidden" style="flex-shrink:0;">
     <a id="btnReactivationWA" href="#" target="_blank" class="btn-whatsapp-dynamic">
       <i class="fab fa-whatsapp" style="font-size:1.2em;"></i>
@@ -502,7 +501,7 @@
       </div>
       <div id="profPaso2" class="hidden form-animated">
         <div class="profesor-notice" style="display:block;">
-          <strong>✨ ¡Código válido! Es tu primer ingreso</strong>
+          <strong id="profPaso2Title">✨ ¡Código válido! Es tu primer ingreso</strong>
           Completa tus datos para activar tu cuenta. La próxima vez entrarás solo con tu código.
         </div>
         <div class="form-grid">
@@ -799,11 +798,9 @@
   }
   function hideAlert() { document.getElementById('alertBox').style.display = 'none'; }
 
-  // ✅ Función mejorada para mostrar botón de reactivación WhatsApp
   function mostrarBotonReactivacion(identificador) {
     const wrap = document.getElementById('reactivationWrap');
     const btn = document.getElementById('btnReactivationWA');
-    // identificador puede ser email o código
     const mensaje = `Hola Admin JARVAZ, mi cuenta (${identificador}) aparece como Inactiva. Solicito información sobre el motivo y posible reactivación.`;
     btn.href = `https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`;
     wrap.classList.remove('hidden');
@@ -881,7 +878,6 @@
         setTimeout(() => { window.location.href = "inicio_de_sesion_general.html"; }, 1800);
         
       } else {
-        // ✅ DETECCIÓN DE CUENTA DESACTIVADA (Alumnos/Público)
         if (res.code === 'CUENTA_DESACTIVADA') {
           showAlert(res.message || 'Esta cuenta fue desactivada por el administrador.', 'warning');
           mostrarBotonReactivacion(params.email);
@@ -902,7 +898,7 @@
     forms[cat].addEventListener("submit", e => { e.preventDefault(); saveUser(forms[cat], cat); });
   });
 
-  // ✅ VERIFICAR CÓDIGO PROFESOR CON MANEJO DE INACTIVO
+  // ✅ VERIFICAR CÓDIGO PROFESOR v5.5 - Maneja Inactivo + Eliminado con auto-borrado
   async function verificarCodigoProfesor() {
     hideAlert();
     document.getElementById('reactivationWrap').classList.add('hidden');
@@ -923,22 +919,32 @@
       
       if (res.status === 'success') {
         if (res.modo === 'reingreso') {
+          // Profesor activo → Login directo
           const user = normalizarProfesor(res.user);
           localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
           mostrarSesionActiva(user);
           showAlert('✅ ¡Bienvenido de vuelta, profesor ' + (user.nombres || '') + '!', 'success');
           setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1200);
         } else {
+          // ✅ MODO REGISTRO: Puede ser código nuevo O código eliminado (auto-borrado)
           window._profCodigo = codigo;
-          showAlert('✨ Código válido. Completa tus datos.', 'info');
+          
+          // Mostrar mensaje especial si fue un código eliminado (auto-borrado por backend)
+          if (res.mensajeInfo) {
+            showAlert('🔄 ' + res.mensajeInfo, 'info');
+            document.getElementById('profPaso2Title').textContent = '🔄 Código anterior eliminado';
+          } else {
+            showAlert('✨ Código válido. Completa tus datos.', 'info');
+            document.getElementById('profPaso2Title').textContent = '✨ ¡Código válido! Es tu primer ingreso';
+          }
+          
           document.getElementById('profPaso1').classList.add('hidden');
           document.getElementById('profPaso2').classList.remove('hidden');
         }
       } else {
-        // ✅ DETECCIÓN ESPECÍFICA DE CÓDIGO INACTIVO
+        // ✅ DETECCIÓN DE CÓDIGO INACTIVO → Botón WhatsApp
         if (res.code === 'CODIGO_INACTIVO') {
           showAlert(res.message || 'Tu código ha sido desactivado.', 'warning');
-          // Usar email devuelto por backend o el código como identificador
           const identificador = res.email || codigo;
           mostrarBotonReactivacion(identificador);
         } else {
