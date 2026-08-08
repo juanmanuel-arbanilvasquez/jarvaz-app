@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.5 -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.6 -->
     <script>
     /* 🛡️ GUARDIÁN DE SESIÓN JARVAZ - inicio.html */
     (function () {
@@ -502,7 +502,11 @@
       <div id="profPaso2" class="hidden form-animated">
         <div class="profesor-notice" style="display:block;">
           <strong id="profPaso2Title">✨ ¡Código válido! Es tu primer ingreso</strong>
-          Completa tus datos para activar tu cuenta. La próxima vez entrarás solo con tu código.
+          <span id="profPaso2Desc">Completa tus datos para activar tu cuenta. La próxima vez entrarás solo con tu código.</span>
+        </div>
+        <!-- ✅ NUEVO: Campo para ingresar código NUEVO cuando el anterior fue eliminado -->
+        <div id="profNuevoCodigoWrap" class="hidden" style="margin-bottom:8px;">
+          <input type="text" id="prof_nuevo_codigo" placeholder="🔑 Ingresa tu NUEVO código JARVAZ asignado" autocomplete="off" style="border-color:var(--oro-500); background:rgba(212,175,55,0.15);">
         </div>
         <div class="form-grid">
           <input type="text" id="prof_nombre" placeholder="Nombres">
@@ -721,9 +725,13 @@
   function resetProfesorForm() {
     document.getElementById('profPaso1').classList.remove('hidden');
     document.getElementById('profPaso2').classList.add('hidden');
+    document.getElementById('profNuevoCodigoWrap').classList.add('hidden');
     const cod = document.getElementById('prof_codigo');
     if (cod) cod.value = '';
+    const nuevoCod = document.getElementById('prof_nuevo_codigo');
+    if (nuevoCod) nuevoCod.value = '';
     window._profCodigo = '';
+    window._profRequiereNuevoCodigo = false;
   }
 
   document.getElementById("btnCrearCuenta").addEventListener("click", function () {
@@ -898,7 +906,7 @@
     forms[cat].addEventListener("submit", e => { e.preventDefault(); saveUser(forms[cat], cat); });
   });
 
-  // ✅ VERIFICAR CÓDIGO PROFESOR v5.5 - Maneja Inactivo + Eliminado con auto-borrado
+  // ✅ VERIFICAR CÓDIGO PROFESOR v5.6 - Pide nuevo código cuando el anterior fue eliminado
   async function verificarCodigoProfesor() {
     hideAlert();
     document.getElementById('reactivationWrap').classList.add('hidden');
@@ -919,30 +927,37 @@
       
       if (res.status === 'success') {
         if (res.modo === 'reingreso') {
-          // Profesor activo → Login directo
           const user = normalizarProfesor(res.user);
           localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
           mostrarSesionActiva(user);
           showAlert('✅ ¡Bienvenido de vuelta, profesor ' + (user.nombres || '') + '!', 'success');
           setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1200);
         } else {
-          // ✅ MODO REGISTRO: Puede ser código nuevo O código eliminado (auto-borrado)
+          // ✅ MODO REGISTRO
           window._profCodigo = codigo;
+          window._profRequiereNuevoCodigo = false;
           
-          // Mostrar mensaje especial si fue un código eliminado (auto-borrado por backend)
+          // Ocultar campo de nuevo código por defecto
+          document.getElementById('profNuevoCodigoWrap').classList.add('hidden');
+          document.getElementById('prof_nuevo_codigo').value = '';
+          
           if (res.mensajeInfo) {
+            // ✅ CÓDIGO ELIMINADO: Mostrar campo para ingresar NUEVO código
             showAlert('🔄 ' + res.mensajeInfo, 'info');
             document.getElementById('profPaso2Title').textContent = '🔄 Código anterior eliminado';
+            document.getElementById('profPaso2Desc').textContent = 'Tu código anterior fue eliminado. Ingresa tu NUEVO código asignado y completa tus datos.';
+            document.getElementById('profNuevoCodigoWrap').classList.remove('hidden');
+            window._profRequiereNuevoCodigo = true;
           } else {
             showAlert('✨ Código válido. Completa tus datos.', 'info');
             document.getElementById('profPaso2Title').textContent = '✨ ¡Código válido! Es tu primer ingreso';
+            document.getElementById('profPaso2Desc').textContent = 'Completa tus datos para activar tu cuenta. La próxima vez entrarás solo con tu código.';
           }
           
           document.getElementById('profPaso1').classList.add('hidden');
           document.getElementById('profPaso2').classList.remove('hidden');
         }
       } else {
-        // ✅ DETECCIÓN DE CÓDIGO INACTIVO → Botón WhatsApp
         if (res.code === 'CODIGO_INACTIVO') {
           showAlert(res.message || 'Tu código ha sido desactivado.', 'warning');
           const identificador = res.email || codigo;
@@ -960,28 +975,45 @@
     }
   }
 
+  // ✅ REGISTRAR PROFESOR v5.6 - Usa nuevo código si fue eliminado
   async function registrarProfesor() {
     hideAlert();
     if (!googleUserActual) { showAlert('🔒 Verifica tu identidad con Google primero', 'error'); return; }
+    
     const v = id => document.getElementById(id).value.trim();
-    const codigo = window._profCodigo || document.getElementById('prof_codigo').value.trim();
+    
+    // ✅ Si requiere nuevo código, usarlo; si no, usar el código original verificado
+    var codigoFinal = '';
+    if (window._profRequiereNuevoCodigo) {
+      codigoFinal = v('prof_nuevo_codigo');
+      if (!codigoFinal) {
+        showAlert('⚠️ Debes ingresar tu NUEVO código JARVAZ asignado', 'warning');
+        document.getElementById('prof_nuevo_codigo').focus();
+        return;
+      }
+    } else {
+      codigoFinal = window._profCodigo || v('prof_codigo');
+    }
+    
     if (!v('prof_nombre') || !v('prof_apellidos') || !v('prof_especialidad') ||
         !v('prof_email') || !v('prof_telefono') || !v('prof_nacimiento')) {
       showAlert('Completa todos los campos', 'error'); return;
     }
+    
     const params = {
-      action: 'registrarProfesor', codigoProfesor: codigo,
+      action: 'registrarProfesor', codigoProfesor: codigoFinal,
       nombres: v('prof_nombre'), apellidos: v('prof_apellidos'), especialidad: v('prof_especialidad'),
       fechaNacimiento: v('prof_nacimiento'), email: v('prof_email'), telefono: v('prof_telefono'),
       googleSub: googleUserActual.sub
     };
+    
     try {
       const res = await llamarAPI(params);
       if (res.status === 'success') {
         const user = {
-          id: codigo, tipo: 'profesor', categoria: 'profesor',
+          id: codigoFinal, tipo: 'profesor', categoria: 'profesor',
           nombres: params.nombres, apellidos: params.apellidos, especialidad: params.especialidad,
-          email: params.email, telefono: params.telefono, codigoProfesor: codigo,
+          email: params.email, telefono: params.telefono, codigoProfesor: codigoFinal,
           googleSub: googleUserActual.sub
         };
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
