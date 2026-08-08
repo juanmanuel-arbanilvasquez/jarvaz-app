@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.5 - Panel Profesor (Sincronizado con Backend v5.5) -->
+    <!-- ✅ GUARDIÁN REMOTO JARVAZ v5.6 - Panel Profesor (Sincronizado con Backend v5.6) -->
     <script>
-    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.5 - inicio_de_sesion_profesor.html */
+    /* 🛡️ GUARDIÁN DE SESIÓN REMOTO v5.6 - inicio_de_sesion_profesor.html */
     (function () {
       const API_URL = 'https://script.google.com/macros/s/AKfycbxra5uGSdnNsX9hBoXhy0s9LLLEY9-QxdkkbDhI1TE_7HK5rMgnT7Uiwkl3r2W5rXeJMQ/exec';
       const WHATSAPP_ADMIN = '51973441252';
@@ -68,7 +68,7 @@
           
           window[cbName] = function(data) {
             cleanup();
-            console.log('🔍 Guardián Profesor v5.5:', JSON.stringify(data));
+            console.log('🔍 Guardián Profesor v5.6:', JSON.stringify(data));
             
             // ✅ CASO 1: PROFESOR ACTIVO Y VÁLIDO → Mostrar página
             if (data && data.activo === 'SI' && data.tipo === 'profesor') {
