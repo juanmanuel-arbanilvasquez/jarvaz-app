@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.2 -->
+    <!-- ✅ PROTECCIÓN ANTI-RETROCESO JARVAZ + VALIDACIÓN EN TIEMPO REAL v5.4 -->
     <script>
     /* 🛡️ GUARDIÁN DE SESIÓN JARVAZ - inicio.html */
     (function () {
@@ -28,29 +28,21 @@
       
       async function validarExistenciaRemota(user) {
         if (!user || user.isGuest) return true;
-        
         try {
           const cbName = 'hb_' + Date.now();
           const script = document.createElement('script');
-          
           return new Promise((resolve) => {
             const timer = setTimeout(() => { cleanup(); resolve(true); }, 4000);
-            
             window[cbName] = function(data) { 
               cleanup(); 
-              if (data && (data.status === 'error' || data.existe === false || data.activo === 'NO')) {
-                resolve(false); 
-              } else {
-                resolve(true);
-              }
+              if (data && (data.status === 'error' || data.existe === false || data.activo === 'NO')) resolve(false); 
+              else resolve(true);
             };
-            
             function cleanup() {
               clearTimeout(timer);
               try { delete window[cbName]; } catch(e){}
               if(script.parentNode) script.parentNode.removeChild(script);
             }
-            
             script.src = `${API_URL}?action=verificarExistencia&id=${encodeURIComponent(user.id)}&callback=${cbName}`;
             script.onerror = () => { cleanup(); resolve(true); };
             document.head.appendChild(script);
@@ -60,23 +52,19 @@
 
       async function ejecutarProteccion() {
         var user = sesionValidaLocal();
-        
         if (user && !user.isGuest) {
           const existe = await validarExistenciaRemota(user);
           if (!existe) {
-            // Mensaje diferenciado según contexto
-            alert('⚠️ Tu sesión ha finalizado porque tu cuenta fue desactivada o restaurada por el administrador. Por favor, inicia sesión nuevamente.');
+            alert('⚠️ Tu sesión ha finalizado porque tu cuenta fue desactivada o restaurada por el administrador.');
             window.forzarCierreSesion('Estado cambiado en BD');
             return;
           }
-          
           var tipo = String(user.tipo || user.categoria || '').toLowerCase();
           var destino = 'inicio_de_sesion_general.html';
           if (tipo === 'profesor') destino = 'inicio_de_sesion_profesor.html';
           window.location.replace(destino);
           return;
         }
-        
         try {
           history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
           history.pushState({ page: 'inicio', ts: Date.now() }, '', window.location.href);
@@ -84,21 +72,14 @@
       }
       
       ejecutarProteccion();
-      
       window.addEventListener('popstate', function(e) {
         if (!e.state || e.state.page === 'inicio') {
           history.go(1);
           setTimeout(() => { try { history.replaceState({ page: 'inicio', ts: Date.now() }, '', window.location.href); } catch(ex){} }, 50);
         }
       });
-      
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) ejecutarProteccion();
-      });
-      
-      window.addEventListener('pageshow', function(e) {
-        if (e.persisted) ejecutarProteccion();
-      });
+      document.addEventListener('visibilitychange', function() { if (!document.hidden) ejecutarProteccion(); });
+      window.addEventListener('pageshow', function(e) { if (e.persisted) ejecutarProteccion(); });
     })();
     </script>
 
@@ -192,7 +173,6 @@
       .alert-success { background:rgba(34,197,94,0.12); color:#86efac; border-color:#22c55e; }
       .alert-error { background:rgba(239,68,68,0.12); color:#fca5a5; border-color:#ef4444; }
       .alert-info { background:rgba(212,175,55,0.12); color:var(--oro-300); border-color:var(--oro-500); }
-      /* ✅ NUEVO: Alerta Warning para cuentas desactivadas */
       .alert-warning { background:rgba(251,146,60,0.12); color:#fdba74; border-color:#fb923c; }
       
       .main-content { flex:1; display:flex; flex-direction:column; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--oro-500) transparent; }
@@ -223,11 +203,7 @@
       
       .google-auth-section {
         background: linear-gradient(135deg, rgba(66,133,244,0.15), rgba(219,68,55,0.08));
-        border: 1px solid rgba(66,133,244,0.4);
-        border-radius: 10px;
-        padding: 10px;
-        margin: 6px 0 10px;
-        text-align: center;
+        border: 1px solid rgba(66,133,244,0.4); border-radius: 10px; padding: 10px; margin: 6px 0 10px; text-align: center;
       }
       .google-auth-section p { font-size: 0.72em; color: #b0c4de; margin-bottom: 8px; line-height: 1.3; }
       .google-auth-section p i { color: var(--oro-400); margin-right: 4px; }
@@ -255,7 +231,6 @@
       @keyframes ripple { 0%{transform:scale(1);opacity:0.4} 100%{transform:scale(1.3);opacity:0} }
       .floating-btn:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 10px 24px rgba(37,211,102,0.5); }
       
-      /* ✅ NUEVO: Botón WhatsApp dinámico para reactivación */
       .btn-whatsapp-dynamic {
         display: inline-flex; align-items: center; gap: 8px;
         width: 100%; padding: 10px; margin-top: 8px;
@@ -279,10 +254,8 @@
         display: flex; align-items: center; justify-content: center; gap: 8px;
         width: 100%; padding: 10px; margin-top: 8px;
         border: 1px dashed var(--oro-500); border-radius: 9px;
-        background: rgba(212, 175, 55, 0.08);
-        color: var(--oro-400); text-decoration: none;
-        font-size: 0.82em; font-weight: 600; font-family: 'Poppins', sans-serif;
-        transition: all 0.3s;
+        background: rgba(212, 175, 55, 0.08); color: var(--oro-400); text-decoration: none;
+        font-size: 0.82em; font-weight: 600; font-family: 'Poppins', sans-serif; transition: all 0.3s;
       }
       .preview-btn:hover { background: rgba(212, 175, 55, 0.2); color: var(--oro-300); border-color: var(--oro-400); transform: translateY(-1px); }
 
@@ -704,12 +677,8 @@
 
   function cerrarSesion() {
     if (confirm('¿Deseas cerrar tu sesión en JARVAZ?')) {
-      if (window.forzarCierreSesion) {
-        window.forzarCierreSesion('Logout manual');
-      } else {
-        localStorage.removeItem('jarvaz_sesion');
-        window.location.replace('inicio.html');
-      }
+      if (window.forzarCierreSesion) window.forzarCierreSesion('Logout manual');
+      else { localStorage.removeItem('jarvaz_sesion'); window.location.replace('inicio.html'); }
     }
   }
 
@@ -775,8 +744,6 @@
     const floatingWrap = document.getElementById('floatingBtnWrap');
     notice.style.display = 'none';
     floatingWrap.classList.remove('active');
-    
-    // ✅ Ocultar botón de reactivación al cambiar categoría
     document.getElementById('reactivationWrap').classList.add('hidden');
     
     if (value && forms[value]) {
@@ -832,11 +799,12 @@
   }
   function hideAlert() { document.getElementById('alertBox').style.display = 'none'; }
 
-  // ✅ Función para mostrar botón de reactivación WhatsApp
-  function mostrarBotonReactivacion(emailUsuario) {
+  // ✅ Función mejorada para mostrar botón de reactivación WhatsApp
+  function mostrarBotonReactivacion(identificador) {
     const wrap = document.getElementById('reactivationWrap');
     const btn = document.getElementById('btnReactivationWA');
-    const mensaje = `Hola Admin JARVAZ, mi cuenta con correo ${emailUsuario} fue desactivada. Solicito información sobre el motivo y posible reactivación.`;
+    // identificador puede ser email o código
+    const mensaje = `Hola Admin JARVAZ, mi cuenta (${identificador}) aparece como Inactiva. Solicito información sobre el motivo y posible reactivación.`;
     btn.href = `https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`;
     wrap.classList.remove('hidden');
   }
@@ -855,7 +823,6 @@
     window.open(`https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(mensaje)}`, '_blank');
   }
 
-  // ✅ FUNCIÓN SAVEUSER MEJORADA: Detecta CUENTA_DESACTIVADA y Eliminado
   async function saveUser(form, category) {
     hideAlert();
     document.getElementById('reactivationWrap').classList.add('hidden');
@@ -905,7 +872,6 @@
         localStorage.setItem('jarvaz_sesion', JSON.stringify(user));
         mostrarSesionActiva(user);
         
-        // ✅ Mensaje diferenciado para re-registro vs nuevo
         const msgExito = (res.message && res.message.includes('restaurada'))
           ? '✅ ¡Cuenta restaurada! Bienvenido de nuevo a JARVAZ. Redirigiendo...'
           : '✅ ¡Cuenta segura creada! Tus datos están protegidos con Google. Redirigiendo...';
@@ -915,7 +881,7 @@
         setTimeout(() => { window.location.href = "inicio_de_sesion_general.html"; }, 1800);
         
       } else {
-        // ✅ DETECCIÓN DE CUENTA DESACTIVADA
+        // ✅ DETECCIÓN DE CUENTA DESACTIVADA (Alumnos/Público)
         if (res.code === 'CUENTA_DESACTIVADA') {
           showAlert(res.message || 'Esta cuenta fue desactivada por el administrador.', 'warning');
           mostrarBotonReactivacion(params.email);
@@ -936,19 +902,25 @@
     forms[cat].addEventListener("submit", e => { e.preventDefault(); saveUser(forms[cat], cat); });
   });
 
+  // ✅ VERIFICAR CÓDIGO PROFESOR CON MANEJO DE INACTIVO
   async function verificarCodigoProfesor() {
     hideAlert();
+    document.getElementById('reactivationWrap').classList.add('hidden');
+    
     if (!googleUserActual) { showAlert('🔒 Primero verifica tu identidad con Google', 'error'); return; }
     
     const codigo = document.getElementById('prof_codigo').value.trim();
     if (!codigo) { showAlert('Ingresa tu código de profesor JARVAZ', 'error'); return; }
+    
     const btn = document.getElementById('btnProfVerificar');
     btn.disabled = true; btn.innerHTML = '<span class="loader"></span>Verificando...';
+    
     try {
       const res = await llamarAPI({ 
         action: 'verificarCodigoProfesor', codigo: codigo,
         googleSub: googleUserActual.sub, emailGoogle: googleUserActual.email
       });
+      
       if (res.status === 'success') {
         if (res.modo === 'reingreso') {
           const user = normalizarProfesor(res.user);
@@ -963,10 +935,23 @@
           document.getElementById('profPaso2').classList.remove('hidden');
         }
       } else {
-        showAlert('❌ ' + (res.message || 'Código no válido'), 'error');
+        // ✅ DETECCIÓN ESPECÍFICA DE CÓDIGO INACTIVO
+        if (res.code === 'CODIGO_INACTIVO') {
+          showAlert(res.message || 'Tu código ha sido desactivado.', 'warning');
+          // Usar email devuelto por backend o el código como identificador
+          const identificador = res.email || codigo;
+          mostrarBotonReactivacion(identificador);
+        } else {
+          showAlert('❌ ' + (res.message || 'Código no válido'), 'error');
+          document.getElementById('reactivationWrap').classList.add('hidden');
+        }
       }
-    } catch (err) { showAlert('⚠️ ' + err.message, 'error'); }
-    finally { btn.disabled = false; btn.innerHTML = 'Verificar código'; }
+    } catch (err) { 
+      showAlert('⚠️ ' + err.message, 'error'); 
+      document.getElementById('reactivationWrap').classList.add('hidden');
+    } finally { 
+      btn.disabled = false; btn.innerHTML = 'Verificar código'; 
+    }
   }
 
   async function registrarProfesor() {
