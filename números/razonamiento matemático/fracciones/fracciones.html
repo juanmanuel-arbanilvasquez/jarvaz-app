@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"/>
+<title>Fracciones · Academia JARVAZ</title>
+<style>
+:root{
+  --paper:#faf5e9; --ink:#2b2620;
+  --leather:#1d2a44; --leather-2:#0f1929; --board:#0c1421;
+  --gold:#d3aa5e; --gold-2:#f0d9a6;
+  --bg-1:#23242d; --bg-2:#0d0e13;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%; overscroll-behavior:none}
+body{
+  display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(1100px 700px at 50% 30%, var(--bg-1), var(--bg-2));
+  font-family:Georgia,'Times New Roman',serif; overflow:hidden;
+  -webkit-user-select:none; user-select:none;
+  touch-action:none; -webkit-touch-callout:none;
+  animation:fadeIn .9s ease;
+}
+@keyframes fadeIn{from{opacity:0}}
+
+/* ===================== ESCENARIO + CAPA DE ZOOM ===================== */
+.stage{width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative; z-index:1;}
+.zoom-layer{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  transform-origin:50% 50%; will-change:transform; z-index:2;}
+.zoom-layer.settle{transition:transform .3s cubic-bezier(.2,.7,.3,1)}
+
+.book-outer{position:relative; transition:transform 0.6s cubic-bezier(.4,.1,.2,1); will-change:transform;}
+.book-outer.closed-front{transform:translateX(-25%)}
+.book-outer.closed-back {transform:translateX(25%)}
+.book-outer.single.closed-front,.book-outer.single.closed-back{transform:none}
+.book-outer.pull{transform:scale(.80); transition:transform .4s cubic-bezier(.3,.7,.3,1)}
+
+.edge{position:absolute; top:1.2cqw; bottom:1.2cqw; z-index:0; transition:opacity .6s,width .6s;
+  background:repeating-linear-gradient(to bottom,#f4eeda 0 .3cqw,#c6bda3 .3cqw .46cqw)}
+.edge-r{left:100%; width:1.7cqw; border-radius:0 .6cqw .6cqw 0; box-shadow:3px 3px 8px rgba(0,0,0,.4)}
+.edge-l{right:100%; width:1.7cqw; border-radius:.6cqw 0 0 .6cqw; box-shadow:-3px 3px 8px rgba(0,0,0,.4)}
+.closed-front .edge-l{opacity:0}
+.closed-back  .edge-r{opacity:0}
+.single .edge-l{width:calc(1cqw + var(--prog,0)*3.4cqw); opacity:1}
+.single .edge-r{width:calc(1cqw + (1 - var(--prog,0))*3.4cqw); opacity:1}
+
+.book-clip{position:absolute; inset:0; perspective:3000px}
+.single .book-clip{overflow:hidden; border-radius:8px; perspective:1900px; box-shadow:0 26px 60px rgba(0,0,0,.7)}
+
+.book{position:absolute; inset:0; transform-style:preserve-3d; container-type:inline-size;
+  touch-action:none; cursor:grab}
+.book:active{cursor:grabbing}
+.book::after{
+  content:''; position:absolute; left:50%; top:0; bottom:0; width:3cqw; transform:translateX(-50%);
+  background:linear-gradient(to right,transparent,rgba(0,0,0,.3) 45% 55%,transparent);
+  z-index:200; pointer-events:none; transition:opacity .5s}
+.closed-front .book::after,.closed-back .book::after,.single .book::after{opacity:0}
+
+.cast{position:absolute; top:0; bottom:0; width:50%; opacity:0; pointer-events:none; z-index:250}
+.cast-r{right:0; background:linear-gradient(to right,rgba(0,0,0,.42),transparent 62%)}
+.cast-l{left:0;  background:linear-gradient(to left, rgba(0,0,0,.42),transparent 62%)}
+.single .cast{width:100%}
+
+.ribbon{position:absolute; left:51.5%; top:-1.4%; width:2.3cqw; min-width:9px; height:17%;
+  background:linear-gradient(#9c2431,#6d1721 80%); z-index:90; pointer-events:none;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 84%,0 100%);
+  box-shadow:0 4px 6px rgba(0,0,0,.35); opacity:0; transition:opacity .7s;
+  transform-origin:50% 0; will-change:transform}
+.ribbon::before{content:''; position:absolute; top:-1px; left:-18%; right:-18%; height:10%;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.4), transparent 70%)}
+.book-outer.ribbon-on .ribbon{opacity:1}
+.single .ribbon{left:auto; right:9%; width:5cqw; height:12%}
+
+.sheet{position:absolute; top:0; right:0; width:50%; height:100%; will-change:transform;
+  transform-origin:left center; transform-style:preserve-3d;
+  transition:transform 0.8s cubic-bezier(.33,.85,.42,1.045)}
+.single .sheet{width:100%}
+.sheet.flipped{transform:rotateY(-180deg)}
+.sheet.dragging{transition:none !important}
+.no-anim *{transition:none !important}
+
+.face{position:absolute; inset:0; overflow:hidden; backface-visibility:hidden; color:var(--ink);
+  background:
+    repeating-linear-gradient(0deg, rgba(120,90,40,.02) 0 2px, transparent 2px 5px),
+    radial-gradient(circle at 68% 8%, #fffdf4, var(--paper) 70%)}
+.face.front{border-radius:.5cqw 1.2cqw 1.2cqw .5cqw; box-shadow:inset -3px 0 8px rgba(0,0,0,.14)}
+.face.back {border-radius:1.2cqw .5cqw .5cqw 1.2cqw; transform:rotateY(180deg); box-shadow:inset 3px 0 8px rgba(0,0,0,.14)}
+.single .face.front{border-radius:0 6px 6px 0}
+.single .face.back {border-radius:6px 0 0 6px}
+.board-r{box-shadow:0 .7cqw 0 -.15cqw var(--board), .7cqw 0 0 -.15cqw var(--board), 0 -.7cqw 0 -.15cqw var(--board), inset -3px 0 8px rgba(0,0,0,.14)}
+.board-l{box-shadow:0 .7cqw 0 -.15cqw var(--board), -.7cqw 0 0 -.15cqw var(--board), 0 -.7cqw 0 -.15cqw var(--board), inset 3px 0 8px rgba(0,0,0,.14)}
+.face.front::before{content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to right,rgba(0,0,0,.22),rgba(0,0,0,.05) 7%,transparent 14%)}
+.face.back::before{content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to left,rgba(0,0,0,.22),rgba(0,0,0,.05) 7%,transparent 14%)}
+.flip-shade{position:absolute; inset:0; pointer-events:none; transition:opacity 0.8s}
+.face.front .flip-shade{opacity:0; background:linear-gradient(to left,rgba(0,0,0,.3),transparent 60%)}
+.sheet.flipped .face.front .flip-shade{opacity:1}
+.face.back .flip-shade{opacity:1; background:linear-gradient(to right,rgba(0,0,0,.3),transparent 60%)}
+.sheet.flipped .face.back .flip-shade{opacity:0}
+
+.page{position:relative; height:100%; display:flex; flex-direction:column; padding:4.4cqw 4.6cqw 3.2cqw}
+.page::after{content:'J'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-size:46cqw; font-weight:700; color:rgba(90,40,40,.045); z-index:-1; pointer-events:none}
+.running{display:flex; justify-content:space-between; font-size:1.4cqw; letter-spacing:.3em;
+  text-transform:uppercase; color:#9a8a68; border-bottom:1px solid #d9cdae; padding-bottom:1.1cqw; margin-bottom:2.4cqw;
+  cursor:pointer; transition:color .3s ease, border-color .3s ease}
+.running:hover{color:var(--gold); border-bottom-color:var(--gold)}
+.rshift span:first-child{padding-left:2.2cqw}
+.single .running span:last-child{padding-right:6.5cqw}
+.page-body{flex:1; overflow:hidden; font-size:1.82cqw; line-height:1.62}
+.page-body h2{font-size:2.9cqw; margin-bottom:2cqw; color:var(--leather)}
+.page-body p{margin-bottom:1.6cqw; text-align:justify}
+.formula{display:block; text-align:center; font-style:italic; color:#5a4413;
+  background:rgba(211,170,94,.12); border:1px dashed rgba(140,110,50,.4);
+  padding:1.4cqw; margin:1.8cqw 0; border-radius:6px}
+.folio{font-size:1.45cqw; color:#8b7c5c; display:flex; align-items:center; gap:1cqw}
+.folio.odd{align-self:flex-end}
+.folio.even{align-self:flex-start; flex-direction:row-reverse}
+.folio::before,.folio.odd::after{content:'—'; color:#c9bc9c}
+.dropcap::first-letter{float:left; font-size:3.3em; line-height:.85; padding-right:1cqw; color:#8a1e2a}
+
+.title-page{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:2.2cqw}
+.title-page .jmark{font-size:6cqw; color:var(--gold)}
+.title-page h1{font-size:4cqw; color:var(--leather); letter-spacing:.06em; line-height:1.25}
+.title-page .rule{width:44%; height:1px; background:linear-gradient(to right,transparent,var(--gold),transparent)}
+.title-page .tcat{font-size:1.7cqw; letter-spacing:.4em; text-transform:uppercase; color:#8a6a2f}
+.title-page .taut{font-size:1.7cqw; color:#6d5f45; font-style:italic}
+
+.toc{list-style:none}
+.toc li{display:flex; align-items:baseline; gap:1.2cqw; margin-bottom:2cqw; font-size:1.95cqw}
+.toc i{flex:1; border-bottom:2px dotted #b7a98c; transform:translateY(-.5cqw)}
+.toc b{color:#8a1e2a}
+.lesson-tag{display:inline-block; font-size:1.3cqw; letter-spacing:.25em; text-transform:uppercase;
+  color:#fff; background:var(--leather); padding:.7cqw 1.6cqw; border-radius:2cqw; margin-bottom:1.6cqw}
+.ex{background:rgba(29,42,68,.06); border-left:.6cqw solid var(--leather); padding:1.6cqw 1.8cqw; margin:1.6cqw 0; border-radius:0 6px 6px 0}
+.ex .t{font-weight:700; color:var(--leather)}
+.opts{margin-top:1cqw; columns:2; font-size:1.7cqw}
+.blank-note{height:100%; display:flex; align-items:center; justify-content:center; color:#b3a685; font-style:italic}
+
+.endpaper{height:100%; background:
+  radial-gradient(circle at 25% 30%, rgba(29,42,68,.1) 0 10%, transparent 11%),
+  radial-gradient(circle at 70% 65%, rgba(29,42,68,.08) 0 14%, transparent 15%),
+  repeating-linear-gradient(45deg, rgba(0,0,0,.028) 0 2px, transparent 2px 7px), #e9dfc8}
+.verso{height:100%; background:radial-gradient(circle at 40% 40%, #f6f0e0, #ece4cf 80%)}
+
+.cover{height:100%; display:flex; align-items:center; justify-content:center;
+  background:
+   repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 3px, transparent 3px 6px),
+   radial-gradient(circle at 30% 18%, #2a3c60, var(--leather-2) 78%)}
+.cover-frame{position:absolute; inset:4cqw; border:.42cqw solid rgba(211,170,94,.9); pointer-events:none}
+.cover-frame::after{content:''; position:absolute; inset:1.1cqw; border:1px solid rgba(211,170,94,.5)}
+.cover-inner{position:relative; width:100%; max-width:100%; padding:6cqw 3.4cqw; text-align:center;
+  color:var(--gold-2); display:flex; flex-direction:column; gap:2.4cqw; align-items:center}
+.cover-inner .cj{width:10cqw; height:10cqw; filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.ctitle{font-size:3.4cqw; letter-spacing:.06em; line-height:1.3; max-width:100%;
+  text-shadow:0 1px 0 rgba(0,0,0,.65), 0 0 14px rgba(211,170,94,.18)}
+.crule{width:46%; height:1px; background:linear-gradient(to right,transparent,var(--gold),transparent)}
+.cacad{font-size:1.8cqw; letter-spacing:.32em; text-transform:uppercase; color:var(--gold); max-width:100%}
+.cautor{font-size:1.65cqw; color:#cfd6e4; font-style:italic; max-width:100%}
+.cover-back p{font-size:1.8cqw; color:#c9d2e2; max-width:80%; font-style:italic}
+
+.curl{position:absolute; right:0; bottom:0; width:9cqw; height:9cqw; opacity:0; pointer-events:none;
+  background:linear-gradient(315deg, transparent 45%, rgba(0,0,0,.18) 47%, #efe6cf 50%, #ddd2b4 100%)}
+.idle .curl{animation:curl 3.4s ease-in-out infinite}
+@keyframes curl{0%,100%{opacity:0}50%{opacity:.9; transform:translate(-.8cqw,-.8cqw)}}
+
+.single .page{padding:9cqw 8cqw 7cqw}
+.single .page::after{font-size:70cqw}
+.single .running{font-size:2.8cqw; padding-bottom:2.4cqw; margin-bottom:4.4cqw}
+.single .page-body{font-size:3.9cqw}
+.single .page-body h2{font-size:6cqw}
+.single .folio{font-size:3cqw}
+.single .title-page h1{font-size:7.4cqw}
+.single .title-page .tcat,.single .title-page .taut{font-size:3.2cqw}
+.single .toc li{font-size:4cqw}
+.single .lesson-tag{font-size:2.8cqw}
+.single .opts{columns:1}
+.single .ctitle{font-size:7cqw}
+.single .cacad{font-size:3.5cqw}
+.single .cautor{font-size:3.1cqw}
+.single .cover-inner .cj{width:18cqw; height:18cqw}
+.single .cover-inner{padding:9cqw 6cqw}
+.single .cover-frame{inset:6cqw}
+.single .curl{width:14cqw; height:14cqw}
+
+.osd{position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-8px);
+  opacity:0; transition:opacity .35s, transform .35s; pointer-events:none; z-index:999;
+  background:rgba(10,10,14,.55); border:1px solid rgba(211,170,94,.35); border-radius:30px;
+  padding:7px 16px; display:flex; align-items:center; gap:8px;
+  font-size:11px; letter-spacing:2px; color:#e6d8b2; text-transform:uppercase}
+.osd.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.osd svg{width:16px; height:16px; fill:#cbb98c}
+.osd.noicon svg{display:none}
+.osd .x{display:none}
+.osd.muted .waves{display:none}
+.osd.muted .x{display:block}
+
+.imgpage{padding:1.7cqw 2cqw 1.6cqw}
+.imgpage .running{margin-bottom:1cqw; padding-bottom:.7cqw}
+.page-body img{
+  mix-blend-mode:multiply;
+  pointer-events:none;
+  -webkit-user-drag:none; -webkit-touch-callout:none;
+}
+.wm{position:absolute; inset:0; z-index:6; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2cqw;
+  font-family:Georgia,serif; font-style:normal; color:rgba(29,42,68,.06); text-align:center}
+.wm b{font-size:34cqw; line-height:.9; font-weight:700}
+.wm span{font-size:2.2cqw; letter-spacing:.5em; padding-left:.5em; text-transform:uppercase}
+.single .imgpage{padding:3.6cqw 4cqw 3.2cqw}
+.single .wm b{font-size:56cqw}
+.single .wm span{font-size:3.8cqw}
+
+/* ===================== ÍNDICE INTERACTIVO ===================== */
+.toc-container {
+  padding: 0.8cqw;
+  font-family: Georgia, serif;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.toc-header {
+  text-align: center;
+  margin-bottom: 2cqw;
+  flex-shrink: 0;
+}
+.toc-title {
+  font-size: 3cqw;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--leather);
+  margin-bottom: 0.6cqw;
+  font-weight: 700;
+}
+.toc-rule {
+  width: 40%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 0.5cqw;
+}
+.toc-subtitle {
+  font-size: 1.3cqw;
+  color: #8a6a2f;
+  font-style: italic;
+}
+
+.toc-tree {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+.toc-node {
+  margin-bottom: 0.3cqw;
+}
+.toc-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5cqw 0.6cqw;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  position: relative;
+  touch-action: manipulation;
+}
+.toc-item:hover {
+  background: rgba(211, 170, 94, 0.15);
+}
+.toc-item:active {
+  transform: scale(0.98);
+}
+.toc-toggle {
+  width: 1.6cqw;
+  height: 1.6cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1cqw;
+  color: var(--gold);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-right: 0.4cqw;
+  flex-shrink: 0;
+}
+.toc-node.open > .toc-item .toc-toggle {
+  transform: rotate(90deg);
+}
+.toc-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1.7cqw;
+  line-height: 1.3;
+}
+.toc-page {
+  font-size: 1.3cqw;
+  color: #8a6a2f;
+  font-style: italic;
+  margin-left: 0.8cqw;
+  flex-shrink: 0;
+}
+.toc-children {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+  opacity: 0;
+  padding-left: 1.8cqw;
+  border-left: 2px solid rgba(211, 170, 94, 0.3);
+  margin-left: 0.8cqw;
+  margin-top: 0;
+}
+.toc-node.open > .toc-children {
+  max-height: 500cqw;
+  opacity: 1;
+  padding-top: 0.2cqw;
+  padding-bottom: 0.2cqw;
+}
+
+/* Niveles */
+.toc-l1 > .toc-item .toc-label {
+  font-size: 2.1cqw;
+  color: var(--leather);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.toc-l2 > .toc-item .toc-label {
+  font-size: 1.85cqw;
+  color: var(--leather);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.toc-l3 > .toc-item {
+  padding: 0.35cqw 0.6cqw;
+}
+.toc-l3 > .toc-item .toc-label {
+  font-size: 1.5cqw;
+  font-weight: 400;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.toc-l3 > .toc-item .toc-page {
+  font-size: 1.2cqw;
+}
+
+/* Modo single */
+.single .toc-container {
+  padding: 1.5cqw;
+}
+.single .toc-title {
+  font-size: 5.5cqw;
+  margin-bottom: 1cqw;
+}
+.single .toc-subtitle {
+  font-size: 2.5cqw;
+}
+.single .toc-l1 > .toc-item .toc-label {
+  font-size: 3.8cqw;
+}
+.single .toc-l2 > .toc-item .toc-label {
+  font-size: 3.3cqw;
+}
+.single .toc-l3 > .toc-item .toc-label {
+  font-size: 2.7cqw;
+}
+.single .toc-toggle {
+  width: 2.8cqw;
+  height: 2.8cqw;
+  font-size: 1.9cqw;
+  margin-right: 0.8cqw;
+}
+.single .toc-page {
+  font-size: 2.2cqw;
+}
+.single .toc-l3 > .toc-item .toc-page {
+  font-size: 2cqw;
+}
+.single .toc-l3 > .toc-item {
+  padding: 0.6cqw 1cqw;
+}
+.single .toc-children {
+  padding-left: 3cqw;
+  margin-left: 1.4cqw;
+}
+
+/* ===================== WIDGET IR A PÁGINA ===================== */
+.goto-widget {
+  position: fixed;
+  bottom: 40px;
+  right: 20px;
+  z-index: 998;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+.goto-widget.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+.goto-inner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(10, 10, 14, 0.88);
+  border: 1px solid rgba(211, 170, 94, 0.5);
+  border-radius: 30px;
+  padding: 4px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.goto-inner input {
+  width: 60px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #e6d8b2;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+}
+.goto-inner input::placeholder {
+  color: #8a7a5c;
+  font-style: italic;
+}
+.goto-inner input::-webkit-outer-spin-button,
+.goto-inner input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.goto-inner input[type=number] {
+  -moz-appearance: textfield;
+}
+.goto-inner button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(211, 170, 94, 0.2);
+  color: #d3aa5e;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  padding: 0;
+}
+.goto-inner button:hover {
+  background: rgba(211, 170, 94, 0.4);
+}
+.goto-inner button:active {
+  transform: scale(0.9);
+}
+.goto-inner button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* ===================== BOTÓN VOLVER AL LIBRO PRINCIPAL ===================== */
+.home-widget {
+  position: fixed;
+  bottom: 40px;
+  left: 20px;
+  z-index: 998;
+}
+.home-widget button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(211, 170, 94, 0.2);
+  color: #d3aa5e;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  padding: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  touch-action: manipulation;
+}
+.home-widget button:hover {
+  background: rgba(211, 170, 94, 0.4);
+}
+.home-widget button:active {
+  transform: scale(0.9);
+}
+.home-widget button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* ===================== CD INTERACTIVO - PÁGINA 2 ===================== */
+.cd-page-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cd-page-wrapper > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  z-index: 1;
+}
+.cd-overlay {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8cqw;
+}
+.cd {
+  width: 35cqw;
+  height: 35cqw;
+  border-radius: 50%;
+  background: 
+    /* Reflejo principal - brillo diagonal */
+    radial-gradient(ellipse at 35% 30%, 
+      rgba(255,255,255,0.45) 0%,
+      rgba(255,255,255,0.15) 18%,
+      rgba(255,255,255,0.05) 32%,
+      transparent 55%
+    ),
+    /* Anillo externo más brillante */
+    radial-gradient(circle at 50% 50%, 
+      transparent 0%,
+      transparent 42%,
+      rgba(211,170,94,0.08) 44%,
+      transparent 46%,
+      transparent 70%,
+      rgba(211,170,94,0.05) 72%,
+      transparent 74%
+    ),
+    /* Base del disco - gradiente cónico para efecto metálico */
+    conic-gradient(
+      from 0deg at 50% 50%,
+      #1a2538 0deg,
+      #253653 30deg,
+      #1e2c45 60deg,
+      #2a3f5e 90deg,
+      #1a2538 120deg,
+      #253653 150deg,
+      #1e2c45 180deg,
+      #2a3f5e 210deg,
+      #1a2538 240deg,
+      #253653 270deg,
+      #1e2c45 300deg,
+      #2a3f5e 330deg,
+      #1a2538 360deg
+    );
+  box-shadow:
+    /* Sombra externa - efecto de elevación */
+    0 3cqw 5cqw rgba(0,0,0,0.5),
+    0 1cqw 2cqw rgba(0,0,0,0.3),
+    /* Brillo interno sutil */
+    inset 0 0 1cqw rgba(255,255,255,0.08),
+    /* Oscuridad interna para dar profundidad */
+    inset 0 0 6cqw rgba(0,0,0,0.3);
+  position: relative;
+  /* Borde dorado sutil */
+  border: 0.25cqw solid rgba(211,170,94,0.4);
+  animation: cd-shimmer 8s ease-in-out infinite;
+}
+
+/* Surcos del CD - líneas radiales sutiles */
+.cd::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: 
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0,
+      transparent 0.15cqw,
+      rgba(255,255,255,0.025) 0.15cqw,
+      rgba(255,255,255,0.025) 0.25cqw
+    );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Reflejo secundario más difuso */
+.cd::after {
+  content: '';
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  top: 8%;
+  left: 18%;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.2) 0%,
+    rgba(255,255,255,0.08) 35%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Hub central - parte plateada del CD */
+.cd-hub {
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: 
+    radial-gradient(circle at 40% 35%,
+      #ffffff 0%,
+      #e8e8e8 30%,
+      #c8c8c8 60%,
+      #a8a8a8 100%
+    );
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    inset 0 0 0.4cqw rgba(0,0,0,0.25),
+    0 0 0.3cqw rgba(0,0,0,0.4),
+    0 0.1cqw 0.2cqw rgba(255,255,255,0.3);
+  z-index: 10;
+  /* Anillo interno del hub */
+  border: 0.15cqw solid rgba(0,0,0,0.15);
+}
+
+/* Agujero central del CD */
+.cd-hole {
+  width: 45%;
+  height: 45%;
+  background: 
+    radial-gradient(circle,
+      var(--paper) 0%,
+      #f0e8d8 70%,
+      #e0d8c8 100%
+    );
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 0 0.3cqw rgba(0,0,0,0.5),
+    inset 0 0.1cqw 0.2cqw rgba(0,0,0,0.3);
+  /* Borde del agujero */
+  border: 0.1cqw solid rgba(0,0,0,0.2);
+}
+
+/* Contenido del CD: J grande en la parte superior del disco */
+.cd-j {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+  font-family: Georgia, serif;
+  font-size: 9.6cqw;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 
+    0 0.1cqw 0.2cqw rgba(0,0,0,0.6),
+    0 0 0.6cqw rgba(211,170,94,0.4),
+    0 0.1cqw 0 rgba(255,255,255,0.2);
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+/* Contenido del CD: nombre JARVAZ en la parte inferior, fuera del círculo blanco central */
+.cd-text {
+  position: absolute;
+  bottom: 7.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+  font-family: Georgia, serif;
+  font-size: 2.1cqw;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--gold-2);
+  text-shadow: 
+    0 0.1cqw 0.15cqw rgba(0,0,0,0.6),
+    0 0 0.3cqw rgba(211,170,94,0.25);
+  font-weight: 600;
+  padding-left: 0.35em; /* Compensar letter-spacing */
+  white-space: nowrap;
+}
+
+/* Animación sutil de brillo en el CD */
+@keyframes cd-shimmer {
+  0%, 100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.08) saturate(1.05);
+  }
+}
+
+/* Modo single - ajustes de tamaño del CD */
+.single .cd-overlay {
+  margin-top: 14cqw;
+}
+.single .cd {
+  width: 63cqw;
+  height: 63cqw;
+}
+.single .cd-j {
+  font-size: 17.3cqw;
+}
+.single .cd-text {
+  font-size: 3.8cqw;
+  letter-spacing: 0.35em;
+}
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="zoom-layer" id="zoomLayer">
+    <div class="book-outer closed-front idle" id="outer">
+      <div class="edge edge-l"></div>
+      <div class="edge edge-r"></div>
+      <div class="book-clip">
+        <div class="book" id="book"></div>
+        <div class="cast cast-l" id="castL"></div>
+        <div class="cast cast-r" id="castR"></div>
+      </div>
+      <div class="ribbon" id="ribbon"></div>
+    </div>
+  </div>
+</div>
+
+<div class="osd muted" id="osd">
+  <svg viewBox="0 0 24 24">
+    <path d="M4 9v6h4l6 5V4L8 9H4z"/>
+    <g class="waves"><path d="M16.5 8.7a4.8 4.8 0 0 1 0 6.6l-1.1-1.1a3.2 3.2 0 0 0 0-4.4l1.1-1.1z"/>
+    <path d="M18.6 6.6a7.8 7.8 0 0 1 0 10.8l-1.1-1.1a6.2 6.2 0 0 0 0-8.6l1.1-1.1z"/></g>
+    <g class="x"><path d="M16 9l5 6M21 9l-5 6" stroke="#cbb98c" stroke-width="1.8" fill="none"/></g>
+  </svg>
+  <span id="osdTxt">Sonido desactivado</span>
+</div>
+
+<!-- Widget de navegación -->
+<div class="goto-widget" id="gotoWidget">
+  <div class="goto-inner">
+    <input type="number" id="gotoInput" placeholder="Pág." min="1">
+    <button id="gotoBtn" title="Ir a página">
+      <svg viewBox="0 0 24 24">
+        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Botón para regresar al libro principal -->
+<div class="home-widget" id="homeWidget">
+  <button id="homeBtn" title="Volver a Razonamiento Matemático">
+    <svg viewBox="0 0 24 24">
+      <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+/* =====================================================================
+   CONTENIDO DEL LIBRO
+   ===================================================================== */
+const INDEX_HTML = `<div class="toc-container">
+  <div class="toc-header">
+    <div class="toc-title">ÍNDICE</div>
+    <div class="toc-rule"></div>
+    <div class="toc-subtitle">Contenido del libro</div>
+  </div>
+  <ul class="toc-tree">
+    <li class="toc-node toc-l1" data-page="2">
+      <div class="toc-item">
+        <span class="toc-toggle">▸</span>
+        <span class="toc-label">MARCO TEÓRICO</span>
+        <span class="toc-page">pág. 2</span>
+      </div>
+      <ul class="toc-children">
+        <li class="toc-node toc-l2" data-page="3">
+          <div class="toc-item">
+            <span class="toc-toggle">▸</span>
+            <span class="toc-label">EJEMPLOS DE FRACCIONES</span>
+            <span class="toc-page">pág. 3</span>
+          </div>
+          <ul class="toc-children">
+            <li class="toc-node toc-l3" data-page="3">
+              <div class="toc-item">
+                <span class="toc-label">Introducción</span>
+                <span class="toc-page">pág. 3</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="3">
+              <div class="toc-item">
+                <span class="toc-label">Concepto</span>
+                <span class="toc-page">pág. 3</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="4">
+              <div class="toc-item">
+                <span class="toc-label">Representación gráfica de una fracción</span>
+                <span class="toc-page">pág. 4</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="4">
+              <div class="toc-item">
+                <span class="toc-label">Operaciones con fracciones</span>
+                <span class="toc-page">pág. 4</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="4">
+              <div class="toc-item">
+                <span class="toc-label">Fracción de fracción</span>
+                <span class="toc-page">pág. 4</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="5">
+              <div class="toc-item">
+                <span class="toc-label">Principales tipos de fracciones</span>
+                <span class="toc-page">pág. 5</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="6">
+              <div class="toc-item">
+                <span class="toc-label">Comparación de fracciones</span>
+                <span class="toc-page">pág. 6</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="6">
+              <div class="toc-item">
+                <span class="toc-label">Fracciones equivalentes</span>
+                <span class="toc-page">pág. 6</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="7">
+              <div class="toc-item">
+                <span class="toc-label">Problemas aplicados</span>
+                <span class="toc-page">pág. 7</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="8">
+              <div class="toc-item">
+                <span class="toc-label">Relación parte-todo</span>
+                <span class="toc-page">pág. 8</span>
+              </div>
+            </li>
+            <li class="toc-node toc-l3" data-page="8">
+              <div class="toc-item">
+                <span class="toc-label">Fracción generatriz</span>
+                <span class="toc-page">pág. 8</span>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>`;
+
+const PAGE_2_WITH_CD = `<div class="cd-page-wrapper">
+  <img src="paginas/1.jpg" alt="Página 2" decoding="async">
+  <div class="cd-overlay">
+    <div class="cd">
+      <div class="cd-j">J</div>
+      <div class="cd-hub">
+        <div class="cd-hole"></div>
+      </div>
+      <div class="cd-text">JARVAZ</div>
+    </div>
+  </div>
+</div>`;
+
+const CONFIG = {
+  title:'Fracciones',
+  academy:'JARVAZ',
+  author:'Juan Manuel Arbañil Vasquez',
+  year:'2026',
+  storageKey: 'jarvaz_fracciones_progress', 
+  pages:[
+   INDEX_HTML,
+   PAGE_2_WITH_CD,
+   `<img src="paginas/2.jpg" alt="Página 3" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/3.jpg" alt="Página 4" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/4.jpg" alt="Página 5" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/5.jpg" alt="Página 6" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/6.jpg" alt="Página 7" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/7.jpg" alt="Página 8" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/8.jpg" alt="Página 9" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`,
+   `<img src="paginas/9.jpg" alt="Página 10" decoding="async" style="width:100%;height:100%;object-fit:contain;display:block">`
+  ]
+};
+
+const bookEl=document.getElementById('book'), outer=document.getElementById('outer');
+const castL=document.getElementById('castL'), castR=document.getElementById('castR');
+const osd=document.getElementById('osd'), osdTxt=document.getElementById('osdTxt');
+const zoomLayer=document.getElementById('zoomLayer'), stageEl=document.querySelector('.stage');
+const ribbonEl=document.getElementById('ribbon');
+let sheets=[], state=0, mode=null, drag=null, soundOn=false;
+const N = CONFIG.pages.length + (CONFIG.pages.length%2);
+const tpl=h=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstElementChild;};
+const clampN=(n,a,b)=>Math.max(a,Math.min(b,n));
+
+const pageHTML=(c,n,side)=>`<div class="page imgpage">
+  <header class="running${side==='odd'?' rshift':''}" title="Volver al índice"><span>${side==='odd'?CONFIG.title:'Página '+n}</span><span>${side==='odd'?'Página '+n:'Academia '+CONFIG.academy}</span></header>
+  <main class="page-body">${c}</main><i class="wm"><b>J</b><span>Jarvaz</span></i></div>`;
+
+const JLOGO=`<svg class="cj" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="none" stroke="#d3aa5e" stroke-width="2.5"/><circle cx="32" cy="32" r="25" fill="none" stroke="#d3aa5e" stroke-width="1" opacity=".55"/><text x="32" y="44" text-anchor="middle" font-family="Georgia,serif" font-size="34" font-weight="700" fill="#f0d9a6">J</text></svg>`;
+const COVER=`<div class="cover"><div class="cover-frame"></div><div class="cover-inner">
+  ${JLOGO}<h1 class="ctitle">FRACCIONES</h1><div class="crule"></div>
+  <span class="cacad">Academia ${CONFIG.academy}</span>
+  <span class="cautor">Autor: ${CONFIG.author}</span></div><i class="curl"></i></div>`;
+const COVER_BACK=`<div class="cover cover-back"><div class="cover-frame"></div><div class="cover-inner">
+  <span class="jmark" style="font-size:6cqw;color:#d3aa5e">❦</span>
+  <p>«El razonamiento es la gimnasia de la mente.»</p>
+  <span class="cacad">Academia ${CONFIG.academy} · ${CONFIG.year}</span></div></div>`;
+const ENDPAPER=`<div class="endpaper"></div>`, VERSO=`<div class="verso"></div>`;
+
+function addSheet(front,back,boards){
+  const s=tpl(`<div class="sheet"><div class="face front ${boards?'board-r':''}">${front}<div class="flip-shade"></div></div>
+  <div class="face back ${boards?'board-l':''}">${back}<div class="flip-shade"></div></div></div>`);
+  s.addEventListener('transitionend',e=>{if(e.propertyName==='transform')setZ();});
+  bookEl.appendChild(s); sheets.push(s);
+}
+function buildBook(m){
+  bookEl.innerHTML=''; sheets=[];
+  const P=CONFIG.pages.slice(); if(P.length%2)P.push(`<div class="blank-note">Página en blanco intencionalmente.</div>`);
+  if(m==='spread'){
+    addSheet(COVER,ENDPAPER,true);
+    for(let i=0;i<P.length;i+=2) addSheet(pageHTML(P[i],i+1,'odd'),pageHTML(P[i+1],i+2,'even'),false);
+    addSheet(ENDPAPER,COVER_BACK,true);
+  }else{
+    addSheet(COVER,VERSO,true); addSheet(ENDPAPER,VERSO,true);
+    P.forEach((c,i)=>addSheet(pageHTML(c,i+1,i%2?'even':'odd'),VERSO,false));
+    addSheet(ENDPAPER,VERSO,true); addSheet(COVER_BACK,VERSO,true);
+  }
+}
+const maxState=()=> mode==='single'? sheets.length-1 : sheets.length;
+
+function saveProgress() {
+    try {
+        localStorage.setItem(CONFIG.storageKey, JSON.stringify({
+            state: state,
+            mode: mode,
+            timestamp: Date.now()
+        }));
+    } catch(e) { console.warn("No se pudo guardar el progreso", e); }
+}
+
+function loadProgress() {
+    try {
+        const data = localStorage.getItem(CONFIG.storageKey);
+        if(data) return JSON.parse(data);
+    } catch(e) {}
+    return null;
+}
+
+function currentFocus(){
+  const M=maxState();
+  if(mode==='single'){
+    if(state===0)return 0; if(state===1)return .5;
+    if(state===N+2)return N+.5; if(state>=N+3)return N+1; return state-1;
+  }
+  if(state===0)return 0; if(state===M)return N+1; if(state===M-1)return N; return 2*state-1;
+}
+function stateFromFocus(f){
+  if(mode==='single'){
+    if(f<=0)return 0; if(f===.5)return 1; if(f>=N+1)return N+3; if(f===N+.5)return N+2;
+    return Math.round(f)+1;
+  }
+  const S=sheets.length;
+  if(f<=0)return 0; if(f===.5)return 1; if(f>=N+1)return S; if(f===N+.5)return S-1;
+  return f%2===0? f/2+1 : (f+1)/2;
+}
+function setMode(m, keepSavedState){
+  const saved = loadProgress();
+  let f = 0;
+  
+  if (keepSavedState && saved && saved.state > 0) {
+      f = currentFocus();
+  } else if (!keepSavedState && saved && saved.state > 0) {
+      state = saved.state; 
+      f = -1;
+  } else {
+      f = 0;
+  }
+
+  mode=m;
+  outer.classList.toggle('single',m==='single');
+  sizeBook();
+  buildBook(m); 
+  
+  if (f !== -1) state = stateFromFocus(f);
+  
+  if(state > maxState()) state = maxState();
+
+  outer.classList.add('no-anim');
+  sheets.forEach((s,i)=>s.classList.toggle('flipped',i<state));
+  setZ(); applyState();
+  requestAnimationFrame(()=>outer.classList.remove('no-anim'));
+}
+function setZ(a=-1){
+  sheets.forEach((s,i)=>{s.style.zIndex=(i===a)?100:(s.classList.contains('flipped')?i+1:sheets.length-i);});
+}
+function applyState(){
+  const M=maxState();
+  outer.classList.toggle('closed-front',state===0);
+  outer.classList.toggle('closed-back',state===M);
+  outer.classList.toggle('ribbon-on',state>0&&state<M);
+  outer.style.setProperty('--prog',(state/M).toFixed(3));
+  
+  const gotoWidget = document.getElementById('gotoWidget');
+  if(gotoWidget) {
+    gotoWidget.classList.toggle('visible', state > 0 && state < M);
+  }
+  
+  saveProgress();
+}
+function casts(){
+  const kf=[{opacity:0},{opacity:.5,offset:.25},{opacity:.22,offset:.7},{opacity:0}];
+  if(castL.animate)castL.animate(kf,{duration:800,easing:'ease'});
+  if(castR.animate)castR.animate(kf,{duration:800,easing:'ease'});
+}
+
+let pullT=null;
+function ribbonRun(dir){
+  if(!ribbonEl||!ribbonEl.animate)return;
+  const s= dir===1? -1 : 1;
+  ribbonEl.animate([
+    {transform:'rotate(0deg) translateX(0) translateY(0) scaleY(1)'},
+    {transform:`rotate(${8*s}deg) translateX(${1.5*s}%) translateY(-2.5%) scaleY(1.05)`, offset:.28},
+    {transform:`rotate(${-4.5*s}deg) translateX(${-1*s}%) translateY(0) scaleY(1)`,       offset:.6},
+    {transform:`rotate(${2*s}deg)`,                                                       offset:.83},
+    {transform:'rotate(0deg)'}
+  ],{duration:1000,delay:50,easing:'cubic-bezier(.3,.7,.3,1)'});
+}
+function pullIn(dir){ clearTimeout(pullT); outer.classList.add('pull'); ribbonRun(dir); }
+function pullOut(ms){ clearTimeout(pullT); pullT=setTimeout(()=>outer.classList.remove('pull'), ms||1000); }
+
+function forward(){ if(state>=maxState())return; pullIn(1); pullOut(); setZ(state); sheets[state].classList.add('flipped'); state++; applyState(); casts(); playFlip(); }
+function backward(){ if(state<=0)return; pullIn(-1); pullOut(); state--; setZ(state); sheets[state].classList.remove('flipped'); applyState(); casts(); playFlip(); }
+
+let lastBookTap=0, savedState=0;
+function goToState(t){
+  t=clampN(t,0,maxState());
+  setZ();
+  sheets.forEach((s,i)=>s.classList.toggle('flipped',i<t));
+  state=t; applyState(); casts(); playFlip();
+}
+function goToPage(pageNumber) {
+  if (pageNumber < 1 || pageNumber > CONFIG.pages.length) return;
+  const targetState = stateFromFocus(pageNumber);
+  goToState(targetState);
+}
+function toggleBook(){
+  if(v.s>1.05)return;
+  if(state===0){ 
+      const saved = loadProgress();
+      const target = savedState > 0 ? savedState : (saved && saved.state > 0 ? saved.state : 1);
+      goToState(target); 
+  }
+  else { savedState=state; goToState(0); }
+}
+function handleBookTap(){
+  const now=Date.now();
+  if(now-lastBookTap<320){ lastBookTap=0; toggleBook(); }
+  else lastBookTap=now;
+}
+
+let v={s:1,x:0,y:0}, mousePos=null;
+let OW=0, OH=0, SW=0, SH=0, viewQueued=false;
+function measure(){ OW=outer.offsetWidth; OH=outer.offsetHeight; SW=stageEl.clientWidth; SH=stageEl.clientHeight; }
+function baseW(){
+  const vw=innerWidth, vh=innerHeight, fs=fsActive();
+  if(mode==='single') return fs? Math.min(vw*.97,(vh-24)*.72) : Math.min(vw*.92,560,(vh-100)*.72);
+  return fs? Math.min(vw*.99,(vh-16)*1.45) : Math.min(vw*.97,1600,(vh-48)*1.45);
+}
+function sizeBook(){ 
+  outer.style.width=baseW()+'px';
+  outer.style.aspectRatio = mode==='single' ? '72/100' : '10/7'; 
+  measure(); 
+}
+function applyView(){ 
+  zoomLayer.style.transform=`translate(${v.x}px,${v.y}px) scale(${v.s})`; 
+}
+function queueView(){ if(viewQueued)return; viewQueued=true;
+  requestAnimationFrame(()=>{viewQueued=false; applyView();}); 
+}
+function bounds(){ 
+  return {mx:Math.max(0,(OW*v.s-SW)/2), my:Math.max(0,(OH*v.s-SH)/2)}; 
+}
+function clampView(){
+  v.s=Math.min(4.0, Math.max(1.0, v.s));          
+  const b=bounds();
+  v.x=clampN(v.x,-b.mx,b.mx); 
+  v.y=clampN(v.y,-b.my,b.my);
+  if(v.s<=1.001){v.x=0;v.y=0;}
+}
+function showZoom(){ showOSD(soundOn,'Zoom '+Math.round(v.s*100)+' %',true); }
+
+function zoomAbout(px,py,factor,mdx=0,mdy=0){
+  const r=stageEl.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const s2=clampN(v.s*factor, 1.0, 4.0);
+  if(s2 === v.s) return;
+  const k=s2/v.s;
+  v.x=(px-cx)-k*(px-cx-v.x)+mdx;
+  v.y=(py-cy)-k*(py-cy-v.y)+mdy;
+  v.s=s2; 
+  clampView(); 
+  queueView(); 
+  showZoom();
+}
+
+function resetView(){
+  v={s:1,x:0,y:0}; 
+  zoomLayer.classList.add('settle'); 
+  applyView(); 
+  showZoom();
+  setTimeout(()=>zoomLayer.classList.remove('settle'),350);
+}
+
+(function tick(){
+  if(v.s>1.05 && mousePos && !drag && !pinch){
+    const r=stageEl.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    const rx=clampN((mousePos.x-cx)/(r.width/2),-1,1);
+    const ry=clampN((mousePos.y-cy)/(r.height/2),-1,1);
+    const b=bounds();
+    const tx=-rx*b.mx, ty=-ry*b.my;
+    if(Math.abs(tx-v.x)>.5||Math.abs(ty-v.y)>.5){
+      v.x+=(tx-v.x)*.08; v.y+=(ty-v.y)*.08; applyView();
+    }
+  }
+  requestAnimationFrame(tick);
+})();
+
+let osdT=null;
+function showOSD(on,txt,hideIcon){
+  osd.classList.toggle('muted',!on);
+  osd.classList.toggle('noicon',!!hideIcon);
+  osdTxt.textContent = txt || (on?'Sonido activado':'Sonido desactivado');
+  osd.classList.add('show');
+  clearTimeout(osdT); osdT=setTimeout(()=>osd.classList.remove('show'),900);
+}
+function setAudio(vv){ soundOn=vv; showOSD(vv); }
+
+const fsActive=()=> !!document.fullscreenElement || document.body.classList.contains('fake-fs');
+function goFullscreen(){
+  if(fsActive())return;
+  const el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen().catch(()=>document.body.classList.add('fake-fs'));
+  else document.body.classList.add('fake-fs');
+  sizeBook(); clampView(); applyView();
+  showOSD(soundOn,'Pantalla completa');
+}
+function exitFullscreen(){
+  if(!fsActive())return;
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  document.body.classList.remove('fake-fs');
+  sizeBook(); clampView(); applyView();
+  showOSD(soundOn,'Pantalla normal');
+}
+
+function handleTapOutside(){
+  setAudio(!soundOn);
+}
+
+const pts=new Map();
+let pinch=null, wasPinch=false, g=null;
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+addEventListener('pointerdown',e=>{
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){
+    const [a,b]=[...pts.values()];
+    pinch={d:dist(a,b)||1,mid:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}};
+    wasPinch=true; g=null;
+    cancelDrag();
+  }else if(pts.size===1){
+    g={x:e.clientX,y:e.clientY};
+  }
+},true);
+
+addEventListener('pointermove',e=>{
+  if(e.pointerType==='mouse'&&!e.buttons) mousePos={x:e.clientX,y:e.clientY};
+  if(!pts.has(e.pointerId))return;
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&pts.size>=2){
+    const [a,b]=[...pts.values()];
+    const d=dist(a,b)||1, mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+    zoomAbout(mid.x,mid.y,d/pinch.d,mid.x-pinch.mid.x,mid.y-pinch.mid.y);
+    pinch={d,mid};
+  }
+});
+
+function endPointer(e,cancelled){
+  if(!pts.has(e.pointerId))return;
+  pts.delete(e.pointerId);
+  if(pinch&&pts.size<2){ pinch=null; if(v.s<1.03)resetView(); }
+  if(pts.size>0)return;
+  const wp=wasPinch; wasPinch=false;
+  if(cancelled){g=null;return;}
+  if(wp){g=null;return;}
+  if(!g)return;
+  const dx=e.clientX-g.x, dy=e.clientY-g.y; g=null;
+  if(Math.abs(dy)>=70&&Math.abs(dy)>1.8*Math.abs(dx)){ dy<0?goFullscreen():exitFullscreen(); return; }
+  
+  if (e.target.closest('.goto-widget') || e.target.closest('.home-widget') || e.target.closest('.toc-item') || e.target.closest('.running')) {
+    return;
+  }
+  
+  if(Math.hypot(dx,dy)<10 && !bookEl.contains(e.target)){
+     handleTapOutside();
+  }
+}
+addEventListener('pointerup',e=>endPointer(e,false));
+addEventListener('pointercancel',e=>endPointer(e,true));
+
+addEventListener('wheel',e=>{
+  e.preventDefault();
+  if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){ 
+    v.x-=e.deltaX; clampView(); queueView(); showZoom(); 
+  } else {
+    const factor = Math.exp(-e.deltaY*0.0015);
+    zoomAbout(e.clientX,e.clientY,factor);
+  }
+},{passive:false});
+
+['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+bookEl.addEventListener('pointerdown',e=>{
+  if(pts.size>1)return;
+  
+  if (e.target.closest('.toc-item') || e.target.closest('.running')) {
+    return;
+  }
+  
+  outer.classList.remove('idle');
+  if(e.pointerType==='mouse'){
+    if(e.button===1){e.preventDefault();return;}
+    if(e.button!==0)return;
+    if(v.s>1.05)return;
+  }
+  const rect=bookEl.getBoundingClientRect(); let dir,sheet; const M=maxState();
+  if(state===0){dir=1;sheet=sheets[0];}
+  else if(state===M){dir=-1;sheet=sheets[state-1];}
+  else if(mode==='single'){dir=e.clientX>=rect.left+rect.width*.35?1:-1; sheet=dir===1?sheets[state]:sheets[state-1];}
+  else if(e.clientX>=rect.left+rect.width/2){dir=1;sheet=sheets[state];}
+  else{dir=-1;sheet=sheets[state-1];}
+  drag={dir,sheet,startX:e.clientX,startY:e.clientY,w:sheet.getBoundingClientRect().width||rect.width/2,p:0,moved:0,vert:false};
+  sheet.classList.add('dragging'); setZ(sheets.indexOf(sheet));
+  pullIn(dir);
+  bookEl.setPointerCapture(e.pointerId);
+});
+bookEl.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.startX, dy=e.clientY-drag.startY;
+  if(Math.abs(dy)>=70&&Math.abs(dy)>1.8*Math.abs(dx))drag.vert=true;
+  drag.moved=Math.max(drag.moved,Math.abs(dx));
+  drag.p=Math.min(1,Math.max(0,drag.dir===1?-dx/drag.w:dx/drag.w));
+  drag.sheet.style.transform='rotateY('+(drag.dir===1?-180*drag.p:-180+180*drag.p)+'deg)';
+});
+function cancelDrag(){
+  if(!drag)return; const d=drag; drag=null;
+  pullOut(300);
+  requestAnimationFrame(()=>{d.sheet.classList.remove('dragging'); d.sheet.style.transform='';});
+}
+function endBookPointer(allow){
+  if(!drag)return; const d=drag; drag=null;
+  pullOut(1000);
+  requestAnimationFrame(()=>{
+    d.sheet.classList.remove('dragging'); d.sheet.style.transform='';
+    if(!allow||d.vert)return;
+    if(d.moved<8){ handleBookTap(); return; }
+    if(d.p>.45){
+      if(d.dir===1&&sheets.indexOf(d.sheet)===state){d.sheet.classList.add('flipped');state++;}
+      else if(d.dir===-1&&sheets.indexOf(d.sheet)===state-1){d.sheet.classList.remove('flipped');state--;}
+      applyState(); casts(); playFlip();
+    }
+  });
+}
+bookEl.addEventListener('pointerup',()=>endBookPointer(true));
+bookEl.addEventListener('pointercancel',()=>endBookPointer(false));
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')forward();
+  if(e.key==='ArrowLeft')backward();
+  const r=stageEl.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+  if(e.key==='+'||e.key==='=')zoomAbout(cx,cy,1.2);
+  if(e.key==='-'||e.key==='_')zoomAbout(cx,cy,0.8);
+  if(e.key==='0')resetView();
+});
+
+let actx=null;
+function playFlip(){
+  if(!soundOn)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const t=actx.currentTime;
+    const dur=.42, buf=actx.createBuffer(1,actx.sampleRate*dur,actx.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.6);
+    const src=actx.createBufferSource(); src.buffer=buf;
+    const f=actx.createBiquadFilter(); f.type='bandpass'; f.Q.value=.9;
+    f.frequency.setValueAtTime(1600,t); f.frequency.exponentialRampToValueAtTime(320,t+dur);
+    const g2=actx.createGain(); g2.gain.setValueAtTime(.0001,t);
+    g2.gain.exponentialRampToValueAtTime(.22,t+.06); g2.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    src.connect(f); f.connect(g2); g2.connect(actx.destination); src.start(t);
+    const t2=t+dur-.04, dur2=.09, b2=actx.createBuffer(1,actx.sampleRate*dur2,actx.sampleRate), d2=b2.getChannelData(0);
+    for(let i=0;i<d2.length;i++)d2[i]=(Math.random()*2-1)*Math.pow(1-i/d2.length,3);
+    const s2=actx.createBufferSource(); s2.buffer=b2;
+    const f2=actx.createBiquadFilter(); f2.type='lowpass'; f2.frequency.value=420;
+    const g3=actx.createGain(); g3.gain.setValueAtTime(.14,t2); g3.gain.exponentialRampToValueAtTime(.0001,t2+dur2);
+    s2.connect(f2); f2.connect(g3); g3.connect(actx.destination); s2.start(t2);
+  }catch(e){}
+}
+
+const desiredMode=()=> (innerWidth<innerHeight && innerWidth<700)?'single':'spread';
+let rT; addEventListener('resize',()=>{clearTimeout(rT); rT=setTimeout(()=>{const d=desiredMode(); if(d!==mode)setMode(d,true); else {sizeBook();} clampView(); applyView();},150);});
+
+let lastTap = 0;
+let lastTappedNode = null;
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.goto-widget') || e.target.closest('.home-widget') || e.target.closest('.osd') || e.target.closest('button') || e.target.closest('input')) {
+    return;
+  }
+  
+  const tocItem = e.target.closest('.toc-item');
+  if (tocItem) {
+    const node = tocItem.closest('.toc-node');
+    if (node) {
+      const now = Date.now();
+      const timeDiff = now - lastTap;
+      const isDoubleTap = (timeDiff < 400 && timeDiff > 0 && lastTappedNode === node);
+      
+      if (isDoubleTap) {
+        const page = parseInt(node.dataset.page);
+        if (page && !isNaN(page)) {
+          goToPage(page);
+        }
+      } else {
+        if (node.classList.contains('toc-l1') || node.classList.contains('toc-l2')) {
+          node.classList.toggle('open');
+        }
+      }
+      
+      lastTap = now;
+      lastTappedNode = node;
+    }
+    e.stopPropagation();
+    return;
+  }
+  
+  const running = e.target.closest('.running');
+  if (running) {
+    const pageDiv = running.closest('.page');
+    if (pageDiv) {
+      const pageContent = pageDiv.querySelector('.page-body');
+      if (pageContent && pageContent.querySelector('.toc-container')) {
+        return;
+      }
+    }
+    goToPage(1);
+    return;
+  }
+});
+
+const gotoBtn = document.getElementById('gotoBtn');
+const gotoInput = document.getElementById('gotoInput');
+
+if (gotoBtn && gotoInput) {
+  gotoBtn.addEventListener('click', () => {
+    const page = parseInt(gotoInput.value);
+    if (!isNaN(page) && page >= 1 && page <= CONFIG.pages.length) {
+      goToPage(page);
+      gotoInput.value = '';
+      gotoInput.blur();
+    } else {
+      gotoInput.style.animation = 'shake 0.4s ease';
+      setTimeout(() => { gotoInput.style.animation = ''; }, 400);
+    }
+  });
+
+  gotoInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      gotoBtn.click();
+    }
+  });
+  
+  document.getElementById('gotoWidget').addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+  document.getElementById('gotoWidget').addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+  });
+}
+
+/* Botón para regresar al libro principal: razonamiento_matemático.html */
+const homeBtn = document.getElementById('homeBtn');
+const homeWidget = document.getElementById('homeWidget');
+
+if (homeBtn && homeWidget) {
+  homeBtn.addEventListener('click', () => {
+    window.location.href = '../razonamiento_matemático.html';
+  });
+  homeWidget.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+  homeWidget.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+  });
+}
+
+setMode(desiredMode(), false);
+</script>
+</body>
+</html>
