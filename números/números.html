@@ -523,6 +523,43 @@ body{
   20%, 60% { transform: translateX(-5px); }
   40%, 80% { transform: translateX(5px); }
 }
+
+/* ===================== BOTÓN IR A CICLO PREMIUM JARVAZ ===================== */
+.home-widget {
+  position: fixed;
+  bottom: 40px;
+  left: 20px;
+  z-index: 998;
+}
+.home-widget button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(211, 170, 94, 0.2);
+  color: #d3aa5e;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  padding: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  touch-action: manipulation;
+}
+.home-widget button:hover {
+  background: rgba(211, 170, 94, 0.4);
+}
+.home-widget button:active {
+  transform: scale(0.9);
+}
+.home-widget button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
 </style>
 </head>
 <body>
@@ -562,6 +599,15 @@ body{
       </svg>
     </button>
   </div>
+</div>
+
+<!-- Botón para ir a Ciclo Premium JARVAZ -->
+<div class="home-widget" id="homeWidget">
+  <button id="homeBtn" title="Ir a Ciclo Premium JARVAZ">
+    <svg viewBox="0 0 24 24">
+      <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+    </svg>
+  </button>
 </div>
 
 <script>
@@ -994,7 +1040,7 @@ function endPointer(e,cancelled){
   const dx=e.clientX-g.x, dy=e.clientY-g.y; g=null;
   if(Math.abs(dy)>=70&&Math.abs(dy)>1.8*Math.abs(dx)){ dy<0?goFullscreen():exitFullscreen(); return; }
 
-  if (e.target.closest('.goto-widget') || e.target.closest('.toc-item') || e.target.closest('.running')) {
+  if (e.target.closest('.goto-widget') || e.target.closest('.home-widget') || e.target.closest('.toc-item') || e.target.closest('.running')) {
     return;
   }
 
@@ -1108,7 +1154,7 @@ const desiredMode=()=> (innerWidth<innerHeight && innerWidth<700)?'single':'spre
 let rT; addEventListener('resize',()=>{clearTimeout(rT); rT=setTimeout(()=>{const d=desiredMode(); if(d!==mode){setMode(d); openToIndex();} else {sizeBook();} clampView(); applyView();},150);});
 
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.goto-widget') || e.target.closest('.osd') || e.target.closest('button') || e.target.closest('input')) {
+  if (e.target.closest('.goto-widget') || e.target.closest('.home-widget') || e.target.closest('.osd') || e.target.closest('button') || e.target.closest('input')) {
     return;
   }
 
@@ -1152,6 +1198,35 @@ if (gotoBtn && gotoInput) {
     e.stopPropagation();
   });
   document.getElementById('gotoWidget').addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+  });
+}
+
+/* =====================================================================
+   BOTÓN IR A CICLO PREMIUM JARVAZ
+   Estructura confirmada:
+     📁 proyecto/
+     ├── ciclo_premium_jarvaz.html     ← DESTINO (carpeta raíz)
+     └── 📁 números/
+         └── números.html              ← ORIGEN (este archivo)
+   Ruta correcta: subir un nivel con ../
+   ===================================================================== */
+const homeBtn = document.getElementById('homeBtn');
+const homeWidget = document.getElementById('homeWidget');
+
+if (homeBtn && homeWidget) {
+  homeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Subir un nivel desde la carpeta "números/" hacia la carpeta raíz
+    // donde se encuentra ciclo_premium_jarvaz.html
+    window.location.href = '../ciclo_premium_jarvaz.html';
+  });
+  
+  homeWidget.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+  homeWidget.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
   });
 }
