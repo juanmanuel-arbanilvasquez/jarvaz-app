@@ -1104,14 +1104,14 @@
   (function() {
     function requestFs() {
       const el = document.documentElement;
-      if (el.requestFullscreen) el.requestFullscreen().catch(err => {});
+      if (el.requestFullscreen) el.requestFullscreen().catch(function(err){});
       else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
       else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
       else if (el.msRequestFullscreen) el.msRequestFullscreen();
     }
     
     function exitFs() {
-      if (document.exitFullscreen) document.exitFullscreen();
+      if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
       else if (document.msExitFullscreen) document.msExitFullscreen();
@@ -1121,36 +1121,37 @@
       return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
     }
     
-    function toggleFs() {
+    function toggleFs(e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
       if (isFs()) exitFs();
       else requestFs();
     }
     
-    // 1. Intento automático al cargar (Funciona en apps nativas/WebView. En navegadores web requerirá el primer clic/toque).
-    window.addEventListener('load', () => {
-      try { requestFs(); } catch(e) {}
+    // 1. Intento automático al cargar la página (puede ser bloqueado por políticas del navegador web)
+    window.addEventListener('load', function() {
+      setTimeout(function() { try { requestFs(); } catch(e){} }, 300);
     });
     
-    // 2. Asegurar pantalla completa en la PRIMERA interacción del usuario (Clic o Toque)
+    // 2. Garantizar fullscreen en la primera interacción del usuario (Clic o Toque)
     function firstInteraction() {
       if (!isFs()) {
-        try { requestFs(); } catch(e) {}
+        try { requestFs(); } catch(e){}
       }
-      // Limpiar eventos de primera interacción
       document.removeEventListener('click', firstInteraction);
       document.removeEventListener('touchstart', firstInteraction);
     }
     document.addEventListener('click', firstInteraction);
     document.addEventListener('touchstart', firstInteraction);
     
-    // 3. UN CLIC/TOQUE en el área del Logo (gorrito + texto JARVAZ) para alternar pantalla completa
-    const headerArea = document.querySelector('.header-compact');
+    // 3. La gorrita/logo como botón para alternar entre pantalla completa y normal
+    var headerArea = document.querySelector('.header-compact');
     if (headerArea) {
       headerArea.addEventListener('click', function(e) {
-        // Evitar que el click en el logo dispare firstInteraction innecesariamente
-        e.stopPropagation();
-        toggleFs();
-      });
+        // Limpiar el listener de primera interacción para evitar conflictos
+        document.removeEventListener('click', firstInteraction);
+        document.removeEventListener('touchstart', firstInteraction);
+        toggleFs(e);
+      }, true);
     }
   })();
 </script>
