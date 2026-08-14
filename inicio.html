@@ -84,8 +84,30 @@
     </script>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- ✅ VIEWPORT OPTIMIZADO PARA APP (viewport-fit=cover para iPhone con muesca) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PREPÁRATE CON JARVAZ · Academia Preuniversitaria</title>
+    
+    <!-- ✅ NUEVO: META TAGS PWA - Convierte la web en app instalable -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JARVAZ">
+    <meta name="application-name" content="JARVAZ">
+    <meta name="theme-color" content="#2D0A0F">
+    <meta name="description" content="Academia Preuniversitaria JARVAZ - Tu camino a la universidad">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- ✅ NUEVO: MANIFEST PWA (archivo manifest.json que le daré abajo) -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- ✅ NUEVO: ICONOS PARA APPLE (necesita subir icon-192.png y icon-512.png) -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-400-normal.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-600-normal.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/poppins@latest/latin-700-normal.css">
@@ -95,7 +117,16 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body { height: 100%; overflow: hidden; background-color: #2D0A0F; }
+      
+      /* ✅ MODIFICACIÓN MÍNIMA CSS: Soporte para áreas seguras (muescas, barras del sistema) */
+      html, body {
+        height: 100%;
+        overflow: hidden;
+        background-color: #2D0A0F;
+        /* Soporte para iPhone con muesca y barras de sistema en Android */
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+      
       :root {
         --vino-900: #2D0A0F; --vino-800: #4A0E17; --vino-700: #6B1420; --vino-600: #8B1A2A;
         --vino-500: #A52238; --oro-500: #D4AF37; --oro-400: #E5C158; --oro-300: #F0D67A; --crema: #FAF6F0;
@@ -504,7 +535,6 @@
           <strong id="profPaso2Title">✨ ¡Código válido! Es tu primer ingreso</strong>
           <span id="profPaso2Desc">Completa tus datos para activar tu cuenta. La próxima vez entrarás solo con tu código.</span>
         </div>
-        <!-- ✅ NUEVO: Campo para ingresar código NUEVO cuando el anterior fue eliminado -->
         <div id="profNuevoCodigoWrap" class="hidden" style="margin-bottom:8px;">
           <input type="text" id="prof_nuevo_codigo" placeholder="🔑 Ingresa tu NUEVO código JARVAZ asignado" autocomplete="off" style="border-color:var(--oro-500); background:rgba(212,175,55,0.15);">
         </div>
@@ -906,7 +936,6 @@
     forms[cat].addEventListener("submit", e => { e.preventDefault(); saveUser(forms[cat], cat); });
   });
 
-  // ✅ VERIFICAR CÓDIGO PROFESOR v5.6 - Pide nuevo código cuando el anterior fue eliminado
   async function verificarCodigoProfesor() {
     hideAlert();
     document.getElementById('reactivationWrap').classList.add('hidden');
@@ -933,16 +962,12 @@
           showAlert('✅ ¡Bienvenido de vuelta, profesor ' + (user.nombres || '') + '!', 'success');
           setTimeout(() => { window.location.href = "inicio_de_sesion_profesor.html"; }, 1200);
         } else {
-          // ✅ MODO REGISTRO
           window._profCodigo = codigo;
           window._profRequiereNuevoCodigo = false;
-          
-          // Ocultar campo de nuevo código por defecto
           document.getElementById('profNuevoCodigoWrap').classList.add('hidden');
           document.getElementById('prof_nuevo_codigo').value = '';
           
           if (res.mensajeInfo) {
-            // ✅ CÓDIGO ELIMINADO: Mostrar campo para ingresar NUEVO código
             showAlert('🔄 ' + res.mensajeInfo, 'info');
             document.getElementById('profPaso2Title').textContent = '🔄 Código anterior eliminado';
             document.getElementById('profPaso2Desc').textContent = 'Tu código anterior fue eliminado. Ingresa tu NUEVO código asignado y completa tus datos.';
@@ -975,14 +1000,12 @@
     }
   }
 
-  // ✅ REGISTRAR PROFESOR v5.6 - Usa nuevo código si fue eliminado
   async function registrarProfesor() {
     hideAlert();
     if (!googleUserActual) { showAlert('🔒 Verifica tu identidad con Google primero', 'error'); return; }
     
     const v = id => document.getElementById(id).value.trim();
     
-    // ✅ Si requiere nuevo código, usarlo; si no, usar el código original verificado
     var codigoFinal = '';
     if (window._profRequiereNuevoCodigo) {
       codigoFinal = v('prof_nuevo_codigo');
@@ -1127,12 +1150,10 @@
       else requestFs();
     }
     
-    // 1. Intento automático al cargar la página (puede ser bloqueado por políticas del navegador web)
     window.addEventListener('load', function() {
       setTimeout(function() { try { requestFs(); } catch(e){} }, 300);
     });
     
-    // 2. Garantizar fullscreen en la primera interacción del usuario (Clic o Toque)
     function firstInteraction() {
       if (!isFs()) {
         try { requestFs(); } catch(e){}
@@ -1143,17 +1164,26 @@
     document.addEventListener('click', firstInteraction);
     document.addEventListener('touchstart', firstInteraction);
     
-    // 3. La gorrita/logo como botón para alternar entre pantalla completa y normal
     var headerArea = document.querySelector('.header-compact');
     if (headerArea) {
       headerArea.addEventListener('click', function(e) {
-        // Limpiar el listener de primera interacción para evitar conflictos
         document.removeEventListener('click', firstInteraction);
         document.removeEventListener('touchstart', firstInteraction);
         toggleFs(e);
       }, true);
     }
   })();
+  
+  // ==========================================
+  // ✅ NUEVO: REGISTRO DEL SERVICE WORKER (PWA)
+  // ==========================================
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('sw.js').catch(function(err) {
+        console.log('SW registration failed: ', err);
+      });
+    });
+  }
 </script>
 </body>
 </html>
