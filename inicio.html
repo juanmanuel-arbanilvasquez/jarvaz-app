@@ -119,7 +119,7 @@
       }
       @keyframes slideUp { from{transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
       .container::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--oro-500),transparent); }
-      .header-compact { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; flex-shrink:0; }
+      .header-compact { display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:10px; flex-shrink:0; cursor: pointer; }
       .logo-wrap { position:relative; width:68px; height:68px; flex-shrink:0; }
       .logo-glow { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90px; height:90px; border-radius:50%; background:radial-gradient(circle, rgba(212,175,55,0.5), transparent 70%); animation:glowPulse 2.5s ease-in-out infinite; z-index:0; }
       .logo-svg { width:68px; height:68px; position:relative; z-index:2; animation:logoFloat 4s ease-in-out infinite; filter:drop-shadow(0 2px 8px rgba(212,175,55,0.5)); transition:transform 0.4s ease; }
@@ -1097,6 +1097,62 @@
     const loginInput = document.getElementById('login_contacto');
     if (loginInput) setTimeout(() => loginInput.focus(), 500);
   });
+
+  // ==========================================
+  // 🚀 MÓDULO DE PANTALLA COMPLETA (FULLSCREEN)
+  // ==========================================
+  (function() {
+    function requestFs() {
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(err => {});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    }
+    
+    function exitFs() {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+    
+    function isFs() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+    }
+    
+    function toggleFs() {
+      if (isFs()) exitFs();
+      else requestFs();
+    }
+    
+    // 1. Intento automático al cargar (Funciona en apps nativas/WebView. En navegadores web requerirá el primer clic/toque).
+    window.addEventListener('load', () => {
+      try { requestFs(); } catch(e) {}
+    });
+    
+    // 2. Asegurar pantalla completa en la PRIMERA interacción del usuario (Clic o Toque)
+    function firstInteraction() {
+      if (!isFs()) {
+        try { requestFs(); } catch(e) {}
+      }
+      // Limpiar eventos de primera interacción
+      document.removeEventListener('click', firstInteraction);
+      document.removeEventListener('touchstart', firstInteraction);
+    }
+    document.addEventListener('click', firstInteraction);
+    document.addEventListener('touchstart', firstInteraction);
+    
+    // 3. UN CLIC/TOQUE en el área del Logo (gorrito + texto JARVAZ) para alternar pantalla completa
+    const headerArea = document.querySelector('.header-compact');
+    if (headerArea) {
+      headerArea.addEventListener('click', function(e) {
+        // Evitar que el click en el logo dispare firstInteraction innecesariamente
+        e.stopPropagation();
+        toggleFs();
+      });
+    }
+  })();
 </script>
 </body>
 </html>
